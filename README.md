@@ -38,9 +38,10 @@ cd AI-Job-Recommendation
 pip install -r requirements.txt
 ```
 
-3. Run the Scrapy spider:
-```bash
-scrapy crawl jobspider
+3. Run the Scrapping to get the job details :
+```
+use selenium
+  
 ```
 
 4. [Optional] Provide your skills to receive recommended jobs.
