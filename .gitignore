@@ -1,3 +1,4 @@
-chromedriver-win64
-_pycache
-venv
+chromedriver-win64/
+__pycache__/
+venv/
+proxies/

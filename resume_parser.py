@@ -1,161 +1,190 @@
 import re
 from PyPDF2 import PdfReader
+from docx import Document
 import spacy
 from spacy.matcher import PhraseMatcher
 from datetime import datetime
+import logging
 
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+logger = logging.getLogger(__name__)
 
-# Expanded skills list (consistent with your scraping scripts)
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    logger.error("spaCy model 'en_core_web_sm' not found. Please download it using: python -m spacy download en_core_web_sm")
+    exit(1)
+
+# Skills list (abbreviated for brevity, expand as needed)
 skills_list = [
-    "c", "c++", "java", "python", "javascript", "typescript", "c#", "php", "go", "rust", "swift", "kotlin", "ruby",
+     "c", "c++", "java", "python", "javascript", "typescript", "c#", "php", "go", "rust", "swift", "kotlin", "ruby",
     "html", "css", "react", "react.js", "next.js", "angular", "vue.js", "svelte", "node.js", "express.js", "django", "flask",
-    "spring boot", "laravel", "asp.net", "fast api", "ruby on rails", "jquery", "bootstrap", "tailwind css",
-    "sql", "mysql", "postgresql", "mongodb", "firebase", "sqlite", "redis", "cassandra", "oracle db", "dynamodb",
+    "spring boot", "laravel", "asp.net", "fastapi", "ruby on rails", "jquery", "bootstrap", "tailwind css",
+    "sql", "mysql", "postgresql", "mongodb", "firebase", "sqlite", "redis", "cassandra", "oracle", "dynamodb",
     "machine learning", "deep learning", "data analysis", "data visualization", "tensorflow", "pytorch", "pandas",
-    "numpy", "scikit-learn", "opencv", "natural language processing (nlp)", "keras", "xgboost", "matplotlib", "seaborn",
-    "aws", "google cloud", "microsoft azure", "docker", "kubernetes", "jenkins", "terraform", "git", "ci/cd", "ci/cd pipelines",
-    "ansible", "puppet", "chef", "cloudformation", "serverless", "lambda", "ec2", "s3", "gcp", "gcp bigquery", "azure",
-    "ethical hacking", "penetration testing", "network security", "cryptography", "firewalls", "wireshark", "metasploit",
+    "numpy", "scikit-learn", "opencv", "nlp", "keras", "xgboost", "matplotlib", "seaborn",
+    "aws", "gcp", "azure", "docker", "kubernetes", "jenkins", "terraform", "git", "cicd", "ansible",
+    "puppet", "chef", "cloudformation", "serverless", "lambda", "ec2", "s3", "bigquery", "ethical hacking",
+    "penetration testing", "network security", "cryptography", "firewalls", "wireshark", "metasploit",
     "burp suite", "nmap", "owasp", "secure coding",
-    "linux", "shell scripting", "windows server", "kernel development", "bash", "powershell", "unix", "Ubuntu",
-    "git & github", "agile", "scrum", "design patterns", "software testing", "oop", "system design", "microservices",
-    "rest", "rest apis", "restful apis", "graphql", "websockets", "soap", "grpc", "api gateway",
-    "unit testing", "integration testing", "selenium", "pytest", "junit", "test automation", "mocking",
-    "big data", "hadoop", "spark", "kafka", "flink", "hive", "pig", "data warehousing", "database fundamentals",
+    "linux", "shell scripting", "windows server", "kernel", "bash", "powershell", "unix", "ubuntu",
+    "agile", "scrum", "design patterns", "testing", "oop", "system design", "microservices",
+    "rest", "restful", "graphql", "websockets", "soap", "grpc", "api",
+    "unit testing", "integration testing", "selenium", "pytest", "junit", "automation",
+    "big data", "hadoop", "spark", "kafka", "flink", "hive", "pig", "data warehousing",
     "blockchain", "solidity", "ethereum", "smart contracts", "web3",
-    "game development", "unity", "unreal engine", "opengl", "directx",
-    "android development", "ios development", "flutter", "react native", "xamarin",
-    "embedded systems", "iot", "arduino", "raspberry pi", "rtos",
-    "devops", "sre", "sre (site reliability engineering)", "monitoring", "prometheus", "grafana", "logging", "splunk",
+    "game development", "unity", "unreal", "opengl", "directx",
+    "android", "ios", "flutter", "react native", "xamarin",
+    "embedded", "iot", "arduino", "raspberry pi", "rtos",
+    "devops", "sre", "monitoring", "prometheus", "grafana", "logging", "splunk",
     "computer vision", "reinforcement learning", "statistics", "probability", "linear algebra",
-    "langchain", "beautiful soup", "scrapy", "asyncio", "multithreading", "concurrent programming", "sqlalchemy",
-    "jira", "trello", "confluence", "bitbucket", "gitlab", "github", "svn"
+    "langchain", "beautifulsoup", "scrapy", "asyncio", "multithreading", "sqlalchemy",
+    "jira", "trello", "confluence", "bitbucket", "gitlab", "svn"
+
 ]
 
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
-patterns = [nlp(skill) for skill in skills_list]
+patterns = [nlp(skill) for skill in set(skills_list)]
 matcher.add("SKILLS", patterns)
 
-# Skill-to-Role Mapping
 skill_to_role_mapping = {
-    "Full Stack Developer": ["javascript", "react", "node.js", "html", "css", "sql", "mongodb", "express.js", "angular", "vue.js"],
-    "Python Developer": ["python", "django", "flask", "pandas", "numpy", "sql", "mysql", "postgresql", "tensorflow", "pytorch"],
-    "Java Developer": ["java", "spring boot", "hibernate", "sql", "mysql", "oracle db", "rest", "microservices"],
-    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization"],
-    "DevOps Engineer": ["aws", "docker", "kubernetes", "jenkins", "terraform", "ansible", "ci/cd", "linux", "bash", "monitoring"],
-    "Frontend Developer": ["javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", "tailwind css"],
-    "Backend Developer": ["node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", "rest", "graphql"],
-    "Mobile Developer": ["flutter", "react native", "android development", "ios development", "kotlin", "swift", "xamarin"],
-    "Cybersecurity Analyst": ["ethical hacking", "penetration testing", "network security", "cryptography", "wireshark", "metasploit", "nmap", "owasp"],
-    "Game Developer": ["unity", "unreal engine", "opengl", "directx", "c++", "game development"],
+    "Full Stack Developer": ["javascript", "react", "node.js", "html", "css", "sql", "mongodb", "express.js", "angular", "vue.js", "next.js", "svelte"],
+    "Python Developer": ["python", "django", "flask", "pandas", "numpy", "sql", "mysql", "postgresql", "tensorflow", "pytorch", "fastapi"],
+    "Java Developer": ["java", "spring boot", "hibernate", "sql", "mysql", "oracle", "rest", "microservices", "junit"],
+    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib"],
+    "DevOps Engineer": ["aws", "docker", "kubernetes", "jenkins", "terraform", "ansible", "cicd", "linux", "bash", "monitoring", "prometheus", "grafana", "sre"],
+    "Frontend Developer": ["javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", "tailwind css", "svelte"],
+    "Backend Developer": ["node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", "rest", "graphql", "grpc"],
+    "Mobile Developer": ["flutter", "react native", "android", "ios", "kotlin", "swift", "xamarin"],
+    "Cybersecurity Analyst": ["ethical hacking", "penetration testing", "network security", "cryptography", "wireshark", "metasploit", "nmap", "owasp", "firewalls"],
+    "Game Developer": ["unity", "unreal", "opengl", "directx", "c++", "game development"],
     "Blockchain Developer": ["blockchain", "solidity", "ethereum", "smart contracts", "web3"]
 }
 
-def get_best_job_roles(user_skills, top_n=3):
-    role_scores = {}
-    for role, required_skills in skill_to_role_mapping.items():
-        matching_skills = set(user_skills) & set(required_skills)
-        score = len(matching_skills) / len(required_skills) * 100  # Percentage of required skills matched
-        role_scores[role] = score
-    
-    # Sort roles by score and return top N
-    sorted_roles = sorted(role_scores.items(), key=lambda x: x[1], reverse=True)
-    return [role for role, score in sorted_roles[:top_n] if score > 0]  # Only return roles with non-zero scores
-
-def extract_resume_text(file):
+def extract_text_from_file(file):
+    """Extract text from PDF or DOCX file."""
+    file_extension = file.filename.split('.')[-1].lower()
     try:
-        reader = PdfReader(file)
-        text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-        return text.lower()
+        if file_extension == 'pdf':
+            reader = PdfReader(file)
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        elif file_extension in ['docx', 'doc']:
+            doc = Document(file)
+            text = "\n".join(paragraph.text for paragraph in doc.paragraphs if paragraph.text)
+        else:
+            raise ValueError(f"Unsupported file format: {file_extension}")
+        return text.lower().strip() if text else ""
     except Exception as e:
-        print(f"Error extracting text from PDF: {e}")
+        logger.error(f"Error processing {file_extension} file: {e}")
         return ""
 
+def extract_personal_info(resume_text):
+    """Extract personal details (name, email, phone) from resume text."""
+    name = re.search(r'[\w\s]+', resume_text.split('\n')[0]) or {"group": ["Unknown"]}
+    email = re.search(r'[\w\.-]+@[\w\.-]+', resume_text)
+    phone = re.search(r'\+?\d{10,12}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}', resume_text)
+    return {
+        "name": name.group(0) if name else "Unknown",
+        "email": email.group(0) if email else "Not found",
+        "phone": phone.group(0) if phone else "Not found"
+    }
+
 def extract_roles(resume_text):
+    """Extract potential job roles from resume text."""
     roles = set()
     doc = nlp(resume_text)
     for ent in doc.ents:
-        if ent.label_ == "ORG":
-            continue
-        if any(keyword in ent.text.lower() for keyword in ["developer", "engineer", "analyst", "manager", "scientist", "architect", "intern"]):
+        if ent.label_ != "ORG" and any(keyword in ent.text.lower() for keyword in ["developer", "engineer", "analyst", "manager", "scientist", "architect", "intern"]):
             roles.add(ent.text.lower().strip())
-    role_patterns = re.findall(r'([a-zA-Z-]+\s?(developer|engineer|analyst|manager|scientist|architect|intern))', resume_text)
+    role_patterns = re.findall(r'([a-zA-Z\s-]+\s?(developer|engineer|analyst|manager|scientist|architect|intern))', resume_text, re.IGNORECASE)
     for role in role_patterns:
         roles.add(role[0].strip())
     return list(roles)
 
 def extract_skills(resume_text):
+    """Extract skills using spaCy PhraseMatcher and regex fallback."""
     skills = set()
-    # Method 1: spaCy PhraseMatcher
     doc = nlp(resume_text)
     matches = matcher(doc)
     for match_id, start, end in matches:
-        skills.add(doc[start:end].text.lower())
-    
-    # Method 2: Regex fallback for skills not caught by spaCy
-    for skill in skills_list:
-        if re.search(rf'\b{re.escape(skill)}\b', resume_text, re.IGNORECASE):
-            skills.add(skill.lower())
-    
+        skill = doc[start:end].text.lower()
+        skills.add(skill)
+    skill_pattern = r'\b(' + '|'.join(map(re.escape, skills_list)) + r')\b'
+    additional_skills = re.findall(skill_pattern, resume_text, re.IGNORECASE)
+    skills.update(skill.lower() for skill in additional_skills)
     return list(skills)
 
 def extract_experience(resume_text):
+    """Extract experience duration and details from resume text."""
     experience_details = []
     total_months = 0
     
-    # Pattern for date ranges (e.g., "Jan 2020 - Present", "2020 - 2022")
-    job_pattern = r'((?:january|february|march|april|may|june|july|august|september|october|november|december)?\s?\d{4})\s*-\s*(current|present|(?:january|february|march|april|may|june|july|august|september|october|november|december)?\s?\d{4})'
+    # Corrected job pattern with balanced parentheses
+    job_pattern = r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)?\s?\d{4}\s*-\s*(?:present|current|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)?\s?\d{4})'
     matches = re.finditer(job_pattern, resume_text, re.IGNORECASE)
     
     for match in matches:
-        start_date = match.group(1).strip()
-        end_date = match.group(2).strip()
+        date_range = match.group(0)
         try:
-            start = datetime.strptime(start_date, '%B %Y') if len(start_date.split()) > 1 else datetime.strptime(start_date, '%Y')
-            end = datetime.now() if end_date.lower() in ['current', 'present'] else (datetime.strptime(end_date, '%B %Y') if len(end_date.split()) > 1 else datetime.strptime(end_date, '%Y'))
+            start_str, end_str = re.split(r'-\s*', date_range)
+            start = datetime.strptime(start_str.strip(), '%B %Y') if any(month in start_str.lower() for month in ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']) else datetime.strptime(start_str.strip(), '%Y')
+            end = datetime.now() if 'present' in end_str.lower() or 'current' in end_str.lower() else (datetime.strptime(end_str.strip(), '%B %Y') if any(month in end_str.lower() for month in ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']) else datetime.strptime(end_str.strip(), '%Y'))
             duration_months = (end.year - start.year) * 12 + (end.month - start.month)
-            total_months += duration_months
+            total_months += max(duration_months, 0)
             years = duration_months // 12
             months = duration_months % 12
-            duration = f"{years} years" if years > 0 else f"{months} months"
-            experience_details.append({'start_date': start_date, 'end_date': end_date, 'duration': duration})
-        except ValueError:
+            duration = f"{years} years" if years > 0 else f"{months} months" if months > 0 else "0 months"
+            experience_details.append({'start_date': start_str, 'end_date': end_str, 'duration': duration})
+        except ValueError as e:
+            logger.warning(f"Invalid date format in {date_range}: {e}")
             continue
     
-    # Fallback: Look for explicit years of experience (e.g., "5 years of experience")
-    years_pattern = r'(\d+)\s*(years|year|yrs|yr)s?\s*of\s*experience'
+    years_pattern = r'(\d+(?:\.\d+)?)\s*(?:years|year|yrs|yr)s?\s*of\s*experience'
     match = re.search(years_pattern, resume_text, re.IGNORECASE)
     if match:
-        total_months = max(total_months, int(match.group(1)) * 12)
+        years = float(match.group(1))
+        total_months = max(total_months, int(years * 12))
     
-    total_years = total_months / 12
+    total_years = total_months / 12 if total_months > 0 else 0
     return total_years, experience_details
 
 def extract_education(resume_text):
-    education_pattern = r'((b\.s\.|m\.s\.|b\.tech|m\.tech|b\.sc|m\.sc|ph\.d))\s*(?:in)?\s*([\w\s]+?)(?:\s*university)?(?:\s*of\s*[\w\s]+)?(?:\s*\d{4}\s*-\s*\d{4})?'
+    """Extract education details from resume text."""
+    education_pattern = r'(b\.(?:s|tech|sc)|m\.(?:s|tech|sc)|ph\.d|(?:bachelor|master|doctorate)\s+of)\s*(?:in\s*)?([\w\s-]+?)(?:\s*(?:university|college|institute)\s*of\s*[\w\s]+)?(?:\s*\d{4}\s*-\s*\d{4})?'
     matches = re.finditer(education_pattern, resume_text, re.IGNORECASE)
     education_details = []
     for match in matches:
         degree = match.group(1).strip()
-        field = match.group(2).strip()
+        field = match.group(2).strip() if match.group(2) else "Unknown"
         education_details.append({'degree': degree, 'field': field})
     return education_details
 
 def categorize_experience(total_years):
+    """Categorize experience level."""
     if total_years <= 1:
         return "Fresher"
-    elif total_years < 5:
+    elif 1 < total_years <= 5:
         return "Mid-Level"
     else:
         return "Experienced"
 
+def get_best_job_roles(user_skills, top_n=3):
+    """Calculate the best job roles based on skill match percentage."""
+    role_scores = {}
+    for role, required_skills in skill_to_role_mapping.items():
+        matching_skills = set(user_skills) & set(required_skills)
+        score = (len(matching_skills) / max(len(required_skills), 1)) * 100
+        role_scores[role] = score
+    sorted_roles = sorted(role_scores.items(), key=lambda x: x[1], reverse=True)
+    return [role for role, score in sorted_roles[:top_n] if score > 0]
+
 def process_resume(file):
-    resume_text = extract_resume_text(file)
+    """Process resume file and extract all relevant information."""
+    resume_text = extract_text_from_file(file)
     if not resume_text:
+        logger.error("No text extracted from resume file.")
         return None
     
+    personal_info = extract_personal_info(resume_text)
     roles = extract_roles(resume_text)
     skills = extract_skills(resume_text)
     total_experience_years, experience_details = extract_experience(resume_text)
@@ -164,9 +193,10 @@ def process_resume(file):
     best_job_roles = get_best_job_roles(skills)
     
     return {
+        "personal_info": personal_info,
         "roles": roles,
         "skills": skills,
-        "total_experience_years": total_experience_years,
+        "total_experience_years": round(total_experience_years, 2),
         "experience_details": experience_details,
         "education": education,
         "experience_category": experience_category,
