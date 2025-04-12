@@ -17,37 +17,52 @@
     <section class="hero-section">
         <div class="container">
             <div class="text-center">
-                <h1 class="display-4 fw-bold mb-4" data-aos="fade-up">Transform Your Career Path with AI</h1>
+                <h1 class="display-4 fw-bold" data-aos="fade-up">Transform Your Career Path with AI</h1>
                 <p class="lead mb-5" data-aos="fade-up" data-aos-delay="100">Upload your resume and discover perfectly
                     matched opportunities</p>
-                <div class="upload-wrapper" data-aos="fade-up" data-aos-delay="200">
-                    <form action="/upload_resume" method="POST" enctype="multipart/form-data">
+                <div class="upload-wrapper" data-aos="zoom-in" data-aos-delay="200">
+                    <form action="/upload_resume" method="POST" enctype="multipart/form-data" class="needs-validation"
+                        novalidate id="uploadForm">
                         <div class="drag-drop-zone" id="dropZone">
                             <input type="file" name="resume" id="resume" class="visually-hidden" required>
-                            <div class="py-4">
-                                <i class="fas fa-cloud-upload-alt fa-3x text-white mb-4"></i>
-                                <h4 class="text-white">Drag & Drop Resume</h4>
-                                <p class="text-white-50 mb-0">PDF or DOCX files only, max size 5MB</p>
+                            <div class="drag-drop-content">
+                                <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
+                                <h4 class="text-primary">Drag & Drop Your Resume Here</h4>
+                                <p class="text-muted">Supported formats: PDF, DOCX (Max size: 5MB)</p>
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-3">Browse Files</button>
+                                <div class="invalid-feedback mt-2">Please select a valid file</div>
                             </div>
                         </div>
                         <div class="row mt-4">
                             <div class="col-md-6 mb-3">
-                                <label for="experience_level" class="form-label text-white">Experience Level</label>
+                                <label for="experience_level" class="form-label">Experience Level</label>
                                 <select name="experience_level" id="experience_level" class="form-select" required>
                                     <option value="" disabled selected>Select your experience level</option>
                                     <option value="Fresher">Fresher (0-1 years)</option>
                                     <option value="Experienced">Experienced (5+ years)</option>
                                 </select>
+                                <div class="invalid-feedback">Please select an experience level</div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="location" class="form-label text-white">Preferred Location</label>
+                                <label for="location" class="form-label">Preferred Location</label>
                                 <input type="text" name="location" id="location" class="form-control"
                                     placeholder="e.g., Bangalore, India">
+                                <div class="invalid-feedback">Please enter a valid location</div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-light btn-lg px-5 mt-4 shadow-sm">Analyze & Match Jobs <i
-                                class="fas fa-arrow-right ms-2"></i></button>
+                        <button type="submit" class="btn btn-primary btn-lg px-5 mt-4 shadow-sm upload-btn"
+                            id="analyzeButton">
+                            Analyze & Match Jobs <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
                     </form>
+
+                    <!-- Loading Animation -->
+                    <div id="loadingOverlay" class="loading-overlay d-none">
+                        <div class="spinner">
+                            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                            <p class="mt-3 text-white">Analyzing your resume and finding jobs...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,18 +82,42 @@
                         Matches</span>
                 </div>
             </div>
+
+            <!-- Top Job Roles Section -->
+            <div class="top-job-roles text-center mb-5" data-aos="fade-up" data-aos-delay="200">
+                <h3 class="h2 mb-4">Your Top Job Roles</h3>
+                <div class="d-flex justify-content-center flex-wrap gap-4">
+                    {% for job in best_job_roles[:3] %}
+                    <div class="top-job-card p-3 shadow-sm rounded">
+                        <h4 class="h5 text-primary">{{ job }}</h4>
+                    </div>
+                    {% endfor %}
+                </div>
+                        </div>
+            <!-- Job Sources Section -->
+            <div class="job-sources text-center mb-4" data-aos="fade-up" data-aos-delay="100">
+                <h2 class="h2 mb-3 text-primary font-monospace fw-bold ">Showing jobs from </h2>
+                {% set source_colors = {'LinkedIn': 'bg-primary', 'Indeed': 'bg-warning', 'Naukri': 'bg-danger'} %}
+                {% for source in jobs | map(attribute='source') | unique %}
+                <span class="badge {{ source_colors[source] or 'bg-secondary' }}">{{ source }}</span>
+                {% endfor %}
+            </div>
+            <!-- Job Grid -->
             <div class="job-grid">
                 {% for job in jobs %}
                 <article class="job-card {% if job.is_premium %}premium{% endif %}" data-aos="fade-up">
-                    <div class="card-header">
-                        <span class="premium-badge {% if job.is_premium %}visible{% endif %}">Premium</span>
-                        <span class="source-tag">{{ job.source }}</span>
+                    <div class="card-header p-1">
+                        <span class="source-tag {{ source_colors[job.source] or 'bg-warning' }}">{{ job.source
+                            }}</span>
+                        {% if job.is_premium %}
+                        <span class="premium-badge bg-warning text-dark">Premium</span>
+                        {% endif %}
                     </div>
                     <div class="job-content">
                         <h3 class="job-title">{{ job.job_title }}</h3>
                         <div class="company-info">
                             <span><i class="fas fa-building"></i> {{ job.company }}</span>
-                            <span class="location-info"><i class="fas fa-location"></i>{{ job.location }}</span>
+                            <span class="location-info"><i class="fas fa-location-dot"></i> {{ job.location }}</span>
                         </div>
                         <div class="job-meta">
                             <span class="meta-item">Posted {{ job.days_since_posted }} days ago</span>
@@ -86,18 +125,18 @@
                         </div>
                         <div class="skills-section">
                             <div class="match-info">
-                                <div class="match-circle">
-                                    <svg class="match-progress" width="60" height="60">
-                                        <circle class="progress-bg" cx="30" cy="30" r="28" stroke-width="4" />
-                                        <circle class="progress-bar" cx="30" cy="30" r="28" stroke-width="4"
-                                            stroke-dasharray="{{ 176 * job.match_score / 100 }} 176" />
-                                        <text x="30" y="35" text-anchor="middle" class="match-percent">{{
-                                            job.match_score }}%</text>
-                                        <text x="30" y="45" text-anchor="middle" class="match-label">Match</text>
-                                    </svg>
-                                </div>
                                 <span class="match-text"><i class="fas fa-check-circle"></i> {{ job.matching_skills }}
                                     Skill Matches</span>
+                                <div class="match-circle">
+                                    <svg class="match-progress" width="100" height="100">
+                                        <circle class="progress-bg" cx="50" cy="50" r="35" stroke-width="7" />
+                                        <circle class="progress-bar" cx="50" cy="50" r="35" stroke-width="7"
+                                            stroke-dasharray="{{ 200* job.match_score / 100 }} 200" />
+                                        <text x="50" y="50" text-anchor="middle" class="match-percent">{{
+                                            job.match_score }}%</text>
+                                        <text x="50" y="65" text-anchor="middle" class="match-label">Match</text>
+                                    </svg>
+                                </div>
                             </div>
                             <div class="skill-pills">
                                 {% for skill in job.matching_skills_list %}
