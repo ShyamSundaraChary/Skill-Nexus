@@ -22,20 +22,6 @@ document.querySelectorAll(".match-percent").forEach((element) => {
   element.style.setProperty("--match-percent", `${percent}%`);
 });
 
-// Apply Now button click effect
-document.querySelectorAll(".btn-apply").forEach((button) => {
-  button.addEventListener("click", (e) => {
-    e.preventDefault(); // Prevent default link behavior
-    if (button.getAttribute("data-clicked") === "false") {
-      button.setAttribute("data-clicked", "true");
-      setTimeout(() => {
-        button.setAttribute("data-clicked", "false");
-        window.open(button.getAttribute("href"), "_blank"); // Open link after animation
-      }, 600); // Match animation duration
-    }
-  });
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("uploadForm");
   const resumeInput = document.getElementById("resume");

@@ -5,7 +5,7 @@ import spacy
 from spacy.matcher import PhraseMatcher
 from datetime import datetime
 import logging
-
+from Scrapping.settings import SKILLS_LIST
 logger = logging.getLogger(__name__)
 
 try:
@@ -15,32 +15,7 @@ except OSError:
     exit(1)
 
 # Skills list (abbreviated for brevity, expand as needed)
-skills_list = [
-     "c", "c++", "java", "python", "javascript", "typescript", "c#", "php", "go", "rust", "swift", "kotlin", "ruby",
-    "html", "css", "react", "react.js", "next.js", "angular", "vue.js", "svelte", "node.js", "express.js", "django", "flask",
-    "spring boot", "laravel", "asp.net", "fastapi", "ruby on rails", "jquery", "bootstrap", "tailwind css",
-    "sql", "mysql", "postgresql", "mongodb", "firebase", "sqlite", "redis", "cassandra", "oracle", "dynamodb",
-    "machine learning", "deep learning", "data analysis", "data visualization", "tensorflow", "pytorch", "pandas",
-    "numpy", "scikit-learn", "opencv", "nlp", "keras", "xgboost", "matplotlib", "seaborn",
-    "aws", "gcp", "azure", "docker", "kubernetes", "jenkins", "terraform", "git", "cicd", "ansible",
-    "puppet", "chef", "cloudformation", "serverless", "lambda", "ec2", "s3", "bigquery", "ethical hacking",
-    "penetration testing", "network security", "cryptography", "firewalls", "wireshark", "metasploit",
-    "burp suite", "nmap", "owasp", "secure coding",
-    "linux", "shell scripting", "windows server", "kernel", "bash", "powershell", "unix", "ubuntu",
-    "agile", "scrum", "design patterns", "testing", "oop", "system design", "microservices",
-    "rest", "restful", "graphql", "websockets", "soap", "grpc", "api",
-    "unit testing", "integration testing", "selenium", "pytest", "junit", "automation",
-    "big data", "hadoop", "spark", "kafka", "flink", "hive", "pig", "data warehousing",
-    "blockchain", "solidity", "ethereum", "smart contracts", "web3",
-    "game development", "unity", "unreal", "opengl", "directx",
-    "android", "ios", "flutter", "react native", "xamarin",
-    "embedded", "iot", "arduino", "raspberry pi", "rtos",
-    "devops", "sre", "monitoring", "prometheus", "grafana", "logging", "splunk",
-    "computer vision", "reinforcement learning", "statistics", "probability", "linear algebra",
-    "langchain", "beautifulsoup", "scrapy", "asyncio", "multithreading", "sqlalchemy",
-    "jira", "trello", "confluence", "bitbucket", "gitlab", "svn"
-
-]
+skills_list =SKILLS_LIST
 
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 patterns = [nlp(skill) for skill in set(skills_list)]
