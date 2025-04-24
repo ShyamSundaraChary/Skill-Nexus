@@ -1,4 +1,4 @@
-chromedriver-win64/
 __pycache__/
 venv/
-proxies/
+*.log
+naukri_scraper.log

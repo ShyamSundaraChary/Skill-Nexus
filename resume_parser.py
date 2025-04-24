@@ -137,20 +137,43 @@ def categorize_experience(total_years):
     """Categorize experience level."""
     if total_years <= 1:
         return "Fresher"
-    elif 1 < total_years <= 5:
-        return "Mid-Level"
     else:
         return "Experienced"
 
 def get_best_job_roles(user_skills, top_n=3):
     """Calculate the best job roles based on skill match percentage."""
     role_scores = {}
+    user_skills_lower = [skill.lower() for skill in user_skills]
+    
     for role, required_skills in skill_to_role_mapping.items():
-        matching_skills = set(user_skills) & set(required_skills)
-        score = (len(matching_skills) / max(len(required_skills), 1)) * 100
-        role_scores[role] = score
+        matching_skills = 0
+        for user_skill in user_skills_lower:
+            for req_skill in required_skills:
+                if user_skill == req_skill or user_skill in req_skill or req_skill in user_skill:
+                    matching_skills += 1
+                    break
+        
+        # Calculate score - weight by both matching skills and percentage
+        match_percentage = (matching_skills / max(len(required_skills), 1)) * 100
+        # Also consider absolute number of matching skills
+        total_score = match_percentage * 0.7 + matching_skills * 10
+        role_scores[role] = total_score
+    
     sorted_roles = sorted(role_scores.items(), key=lambda x: x[1], reverse=True)
-    return [role for role, score in sorted_roles[:top_n] if score > 0]
+    
+    # Get top N roles with scores > 0
+    top_roles = [role.replace(" ", "_").lower() for role, score in sorted_roles[:top_n] if score > 0]
+    
+    # If we don't have enough roles, add default roles based on experience category
+    if len(top_roles) < 2:
+        default_roles = ["software_engineer", "full_stack_developer"]
+        for role in default_roles:
+            if role not in top_roles:
+                top_roles.append(role)
+                if len(top_roles) >= top_n:
+                    break
+    
+    return top_roles[:top_n]  # Return only top N roles
 
 def process_resume(file):
     """Process resume file and extract all relevant information."""
@@ -162,10 +185,23 @@ def process_resume(file):
     personal_info = extract_personal_info(resume_text)
     roles = extract_roles(resume_text)
     skills = extract_skills(resume_text)
+    
+    # Ensure we have at least some skills, even if extraction fails
+    if not skills or len(skills) < 3:
+        # Add some common skills as default
+        default_skills = ["python", "java", "javascript", "sql", "html", "css"]
+        skills.extend(default_skills)
+        # Remove duplicates
+        skills = list(set(skills))
+        logger.warning(f"Few or no skills detected, adding default skills. Skills: {skills}")
+    
     total_experience_years, experience_details = extract_experience(resume_text)
     education = extract_education(resume_text)
     experience_category = categorize_experience(total_experience_years)
     best_job_roles = get_best_job_roles(skills)
+    
+    logger.info(f"Extracted {len(skills)} skills and {len(best_job_roles)} job roles")
+    logger.info(f"Best job roles: {best_job_roles}")
     
     return {
         "personal_info": personal_info,

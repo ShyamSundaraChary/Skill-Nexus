@@ -60,7 +60,7 @@ def connect_db():
             host="localhost",
             user="shyam",
             password="shyam",
-            database="jobs_experienced",
+            database="jobs_fresher",
             pool_size=5
         )
     except mysql.connector.Error as e:
@@ -170,7 +170,8 @@ def scrape_applicants(job_url: str, driver: webdriver.Chrome) -> int:
 def scrape_job_page(job_title: str, page: int, max_jobs: int, driver: webdriver.Chrome) -> List[Dict[str, Any]]:
     jobs = []
     try:
-        base_url = f"https://www.naukri.com/{job_title}-jobs?jobAge=30&pageNo={page}"
+ # Modified URL to fetch fresher jobs (0-3 years experience) and recent postings (last 7 days)
+        base_url = f"https://www.naukri.com/{job_title}-jobs?experience=0&jobAge=7&pageNo={page}"
         driver.get(base_url)
         
         try:

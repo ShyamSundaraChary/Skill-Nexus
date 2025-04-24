@@ -4,6 +4,7 @@ from fuzzywuzzy import fuzz
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import logging
+from config import Config
 from flask import request
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ def calculate_job_score(user_skills, job, experience_category, preferred_locatio
 
     job_skills = job.get('skills_required', '').split(", ") if job.get('skills_required') else []
     matching_skills = set(user_skills) & set(job_skills)
-    skills_match_percentage = (len(matching_skills) / max(len(job_skills), 1)) * 100 if job_skills else 0
+    skills_match_percentage = (len(matching_skills) / max(len(user_skills), 1)) * 100 if job_skills else 50
 
     applicant_count = job.get('applicants', 100) or 100
     salary_value = 0
@@ -46,18 +47,16 @@ def calculate_job_score(user_skills, job, experience_category, preferred_locatio
         freshness_score = max(30 - days_since_posting * 0.1, 0)  # 30%
         applicant_score = max(20 - min(applicant_count, 50) * 0.4, 0)  # 20%
         total_score = similarity_score + freshness_score + applicant_score + (10 if location_match else 0)
-        premium_score = (80 if skills_match_percentage >= 80 else 0) + (50 if applicant_count < 30 else 0) + (30 if days_since_posting < 7 else 0)
-        if salary_value > 1000000:
-            total_score = 0  # Exclude high-salary jobs for freshers
+        premium_score = (80 if skills_match_percentage >= 70 else 0) + (50 if applicant_count < 50 else 0) + (30 if days_since_posting < 10 else 0)
     else:  # Experienced
         similarity_score = skills_match_percentage * 0.4  # 40%
         salary_score = min(salary_value / 1000000 * 30, 30)  # 30%
         experience_score = job_exp_match * 20  # 20%
         freshness_score = max(10 - days_since_posting * 0.33, 0)  # 10%
         total_score = similarity_score + salary_score + experience_score + freshness_score + (10 if location_match else 0)
-        premium_score = (80 if skills_match_percentage >= 80 else 0) + (50 if applicant_count < 50 else 0) + (min(salary_value / 1000000 * 20, 20)) + (30 if job_exp_match else 0)
-        if salary_value < 1000000 or skills_match_percentage < 60:
-            total_score = 0  # Exclude low-salary or low-skill-match jobs for experienced
+        premium_score = (80 if skills_match_percentage >= 70 else 0) + (50 if applicant_count < 50 else 0) + (min(salary_value / 1000000 * 20, 20)) + (30 if job_exp_match else 0)
+        if salary_value < 500000 and skills_match_percentage < 30:
+            total_score = total_score * 0.5
 
     return {
         'total_score': min(total_score, 100),
@@ -70,14 +69,30 @@ def match_jobs_with_resume(user_skills, jobs, experience_category, preferred_loc
     """Match jobs with resume using TF-IDF and custom scoring."""
     resume_text = " ".join(user_skills)
     job_descriptions = [job.get('skills_required', ' ') for job in jobs]
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform([resume_text] + job_descriptions)
-    cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
-
+    
+    if not job_descriptions or all(not desc.strip() for desc in job_descriptions):
+        for job in jobs:
+            job.update({
+                'match_score': 50,
+                'matching_skills': 0,
+                'matching_skills_list': [],
+                'is_premium': False
+            })
+        return sorted(jobs, key=lambda x: x.get('posted_date', datetime.now()), reverse=True)[:Config.MAX_JOBS]
+    
+    try:
+        vectorizer = TfidfVectorizer()
+        tfidf_matrix = vectorizer.fit_transform([resume_text] + job_descriptions)
+        cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+    except Exception as e:
+        logger.error(f"TF-IDF calculation failed: {e}")
+        cosine_similarities = [0.5] * len(jobs)
+    
     job_list = []
     for i, job in enumerate(jobs):
         score_data = calculate_job_score(user_skills, job, experience_category, preferred_location)
-        if score_data['total_score'] > 0:
+        min_score = 10
+        if score_data['total_score'] > min_score:
             job.update({
                 'match_score': round((cosine_similarities[i] * 50 + score_data['total_score'] * 0.5), 2),
                 'matching_skills': score_data['matching_skills'],
@@ -85,5 +100,19 @@ def match_jobs_with_resume(user_skills, jobs, experience_category, preferred_loc
                 'is_premium': score_data['premium_score'] >= 80
             })
             job_list.append(job)
-
-    return sorted(job_list, key=lambda x: x.get('match_score', 0), reverse=True)[:30]
+    
+    result = sorted(job_list, key=lambda x: x.get('match_score', 0), reverse=True)[:Config.MAX_JOBS]
+    
+    if len(result) < Config.MAX_JOBS:
+        remaining_jobs = [job for job in jobs if job not in job_list]
+        for job in remaining_jobs[:Config.MAX_JOBS - len(result)]:
+            job.update({
+                'match_score': 45,
+                'matching_skills': 0,
+                'matching_skills_list': [],
+                'is_premium': False
+            })
+            result.append(job)
+    
+    logger.info(f"Returning {len(result)} jobs after matching")
+    return result

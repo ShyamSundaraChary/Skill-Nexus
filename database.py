@@ -28,9 +28,17 @@ def fetch_jobs_from_db(user_skills, experience_category, best_job_roles, preferr
         return []  # Return empty list if connection fails
 
     cursor = conn.cursor(dictionary=True)
-    thirty_days_ago = (datetime.now() - timedelta(days=Config.RECENT_DAYS)).strftime("%Y-%m-%d")
+    # Increase the time frame to fetch more jobs - from 30 days to 45 days
+    forty_five_days_ago = (datetime.now() - timedelta(days=Config.RECENT_DAYS + 15)).strftime("%Y-%m-%d")
 
     all_jobs = []
+    
+    # If best_job_roles is empty or has fewer than 2 roles, add some common roles
+    if len(best_job_roles) < 2:
+            best_job_roles.extend(["software_engineer"])
+        # Remove duplicates
+    best_job_roles = list(set(best_job_roles))
+    
     for job_role in best_job_roles:
         table_name = job_role.replace(" ", "_").lower()
         try:
@@ -38,14 +46,17 @@ def fetch_jobs_from_db(user_skills, experience_category, best_job_roles, preferr
                 SELECT job_title, company, location, salary, skills_required, job_link, posted_date, applicants, source
                 FROM {table_name}
                 WHERE posted_date >= %s
+                ORDER BY posted_date DESC
+                LIMIT 200
             """
-            cursor.execute(query, (thirty_days_ago,))
+            cursor.execute(query, (forty_five_days_ago,))
             jobs = cursor.fetchall()
             all_jobs.extend(jobs)
+            logger.info(f"Fetched {len(jobs)} jobs from table {table_name}")
         except mysql.connector.Error as e:
             logger.warning(f"Could not fetch jobs from table {table_name}: {e}")
             continue
-
+        
     conn.close()
 
     # Add default experience_level if missing
@@ -69,4 +80,5 @@ def fetch_jobs_from_db(user_skills, experience_category, best_job_roles, preferr
             seen.add(job_key)
             unique_jobs.append(job)
 
+    logger.info(f"Returning {len(unique_jobs)} unique jobs from database")
     return unique_jobs

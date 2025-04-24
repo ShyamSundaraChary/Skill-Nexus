@@ -55,17 +55,19 @@ def upload_resume():
 
     logger.info(f"Fetching jobs for experience: {experience_category}, location: {preferred_location}, roles: {best_job_roles}")
     raw_jobs = fetch_jobs_from_db(user_skills, experience_category, best_job_roles, preferred_location)
+    logger.info(f"Fetched {len(raw_jobs)} raw jobs, now matching with resume")
+    
     jobs = match_jobs_with_resume(user_skills, raw_jobs, experience_category, preferred_location)
+    logger.info(f"Matched and returning {len(jobs)} jobs")
 
     if jobs:
         # Pre-compute days since posting for each job
         today = datetime.now().date()
         for job in jobs:
-            if isinstance(job['posted_date'], str):
-                posted_date = datetime.strptime(job['posted_date'], '%Y-%m-%d').date()
-            elif isinstance(job['posted_date'], datetime):
-                posted_date = job['posted_date'].date()
-            else:
+            posted_date = job.get('posted_date')
+            if isinstance(posted_date, str):
+                posted_date = datetime.strptime(posted_date, '%Y-%m-%d').date()
+            elif not isinstance(posted_date, datetime):
                 posted_date = today
             job['days_since_posted'] = (today - posted_date).days
 
