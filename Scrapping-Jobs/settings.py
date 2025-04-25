@@ -56,7 +56,8 @@ SKILLS_LIST = [
     "git & github", "agile", "scrum", "design patterns", "software testing", "oop", "system design", "microservices",
     "rest", "rest apis", "restful apis", "graphql", "websockets", "soap", "grpc", "api gateway", "swagger",
     "postman", "jira", "confluence", "trello", "slack", "microsoft teams", "zoom", "code review", "pair programming",
-    "tdd", "bdd", "ddd", "clean code", "solid principles", "design patterns", "architecture patterns",
+    "tdd", "bdd", "ddd", "clean code", "solid principles", "design patterns", "architecture patterns","Data Structures",
+    "Algorithms", "Big O Notation", "Recursion", "Dynamic Programming", "Greedy Algorithms", "Graph Algorithms",
     
     # Testing
     "unit testing", "integration testing", "selenium", "pytest", "junit", "test automation", "mocking",

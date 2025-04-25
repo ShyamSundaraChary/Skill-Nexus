@@ -60,18 +60,17 @@ def connect_db():
             host="localhost",
             user="shyam",
             password="shyam",
-            database="jobs_fresher",
+            database="jobs_db",
             pool_size=5
         )
     except mysql.connector.Error as e:
         logging.error(f"Database connection failed: {e}")
         raise
 
-def create_table(conn, job_title: str) -> None:
+def create_table(conn) -> None:
     cursor = conn.cursor()
-    table_name = re.sub(r'[^a-zA-Z0-9_]', '_', job_title.replace("-", "_").lower())
-    query = f"""
-        CREATE TABLE IF NOT EXISTS {table_name} (
+    query = """
+        CREATE TABLE IF NOT EXISTS jobs (
             id INT AUTO_INCREMENT PRIMARY KEY,
             job_title VARCHAR(100) NOT NULL,
             company VARCHAR(100) NOT NULL,
@@ -83,31 +82,37 @@ def create_table(conn, job_title: str) -> None:
             applicants INT,
             source VARCHAR(20) DEFAULT 'Naukri',
             experience_level VARCHAR(50),
-            UNIQUE (job_title, company, source)
+            role VARCHAR(50),
+            job_description TEXT,
+            job_type VARCHAR(50),
+            scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (job_title, company, source),
+            INDEX idx_role_date_exp (role, posted_date, experience_level),
+            INDEX idx_location (location),
+            INDEX idx_posted_date (posted_date)
         )
-    """     
+    """
     try:
         cursor.execute(query)
         conn.commit()
-        logging.info(f"Created/Verified table for {job_title}")
+        logging.info("Created/Verified jobs table")
     except mysql.connector.Error as e:
-        logging.error(f"Failed to create table for {job_title}: {e}")
+        logging.error(f"Failed to create jobs table: {e}")
     finally:
         cursor.close()
 
-def insert_jobs(conn, job_title: str, jobs_data: List[Dict[str, Any]]) -> None:
+def insert_jobs(conn, jobs_data: List[Dict[str, Any]]) -> None:
     if not jobs_data:
-        logging.warning(f"No jobs to insert for {job_title}")
+        logging.warning("No jobs to insert")
         return
     cursor = conn.cursor()
-    table_name = re.sub(r'[^a-zA-Z0-9_]', '_', job_title.replace("-", "_").lower())
-    query = f"""
-        INSERT IGNORE INTO {table_name} 
-        (job_title, company, location, salary, skills_required, job_link, posted_date, applicants, source, experience_level)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    query = """
+        INSERT IGNORE INTO jobs 
+        (job_title, company, location, salary, skills_required, job_link, posted_date, applicants, source, experience_level, role, job_description, job_type)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
-        logging.info(f"Attempting to insert {len(jobs_data)} jobs for {job_title}")
+        logging.info(f"Attempting to insert {len(jobs_data)} jobs")
         cursor.executemany(query, [
             (
                 job["job_title"][:100],
@@ -119,13 +124,16 @@ def insert_jobs(conn, job_title: str, jobs_data: List[Dict[str, Any]]) -> None:
                 job["posted_date"],
                 job["applicants"],
                 "Naukri",
-                job["experience_level"]
+                job["experience_level"],
+                job["role"],
+                job["job_description"],
+                job["job_type"]
             ) for job in jobs_data
         ])
         conn.commit()
-        logging.info(f"Successfully inserted {cursor.rowcount} jobs for {job_title}")
+        logging.info(f"Successfully inserted {cursor.rowcount} jobs")
     except mysql.connector.Error as e:
-        logging.error(f"Failed to insert jobs for {job_title}: {e}")
+        logging.error(f"Failed to insert jobs: {e}")
     finally:
         cursor.close()
 
@@ -170,8 +178,7 @@ def scrape_applicants(job_url: str, driver: webdriver.Chrome) -> int:
 def scrape_job_page(job_title: str, page: int, max_jobs: int, driver: webdriver.Chrome) -> List[Dict[str, Any]]:
     jobs = []
     try:
- # Modified URL to fetch fresher jobs (0-3 years experience) and recent postings (last 7 days)
-        base_url = f"https://www.naukri.com/{job_title}-jobs?experience=0&jobAge=7&pageNo={page}"
+        base_url = f"https://www.naukri.com/{job_title}-jobs?jobAge=30&pageNo={page}"
         driver.get(base_url)
         
         try:
@@ -206,6 +213,32 @@ def scrape_job_page(job_title: str, page: int, max_jobs: int, driver: webdriver.
                 experience = job.find("span", class_="exp").text.strip() if job.find("span", class_="exp") else "Not Available"
                 posted_date = parse_posted_date(job.find("span", class_="job-post-day").text.strip())
                 
+                # Navigate to job details page
+                driver.get(job_link)
+                time.sleep(random.uniform(2, 3))
+                job_soup = BeautifulSoup(driver.page_source, "lxml")
+                
+                # Extract Job Description
+                description_section = job_soup.find("section", class_="styles_job-desc-container__txpYf")
+                job_description = description_section.text.strip() if description_section else "Not Available"
+                if job_description == "Not Available":
+                    logging.warning(f"No job description found for {title} at {company}")
+
+                 # Extract Job Type from Job Description
+                job_type = "Not Available"
+                if job_description != "Not Available":
+                    # Match "Employment Type:" followed by the value up to a comma, semicolon, or end of line
+                    employment_match = re.search(r"Employment Type:\s*([^,\n;]+)", job_description, re.IGNORECASE)
+                    if employment_match:
+                        job_type = employment_match.group(1).strip()
+                    else:
+                        # Fallback: Look for common job type keywords
+                        type_match = re.search(r"(Full Time|Part Time|Contract|Permanent|Internship)", job_description, re.IGNORECASE)
+                        if type_match:
+                            job_type = type_match.group(1).strip()
+                if job_type == "Not Available":
+                    logging.warning(f"No job type found for {title} at {company}")
+
                 applicants = scrape_applicants(job_link, driver)
                 
                 job_data = {
@@ -217,10 +250,13 @@ def scrape_job_page(job_title: str, page: int, max_jobs: int, driver: webdriver.
                     "job_link": job_link,
                     "posted_date": posted_date,
                     "applicants": applicants,
-                    "experience_level": experience
+                    "experience_level": experience,
+                    "role": job_title.replace("-", "_"),
+                    "job_description": job_description,
+                    "job_type": job_type
                 }
                 
-                logging.info(f"Scraped job: {title} at {company}")
+                logging.info(f"Scraped job: {title} at {company}, Job Type: {job_type}, Description Length: {len(job_description)}")
                 jobs.append(job_data)
                 
                 if len(jobs) >= max_jobs:
@@ -236,21 +272,19 @@ def scrape_job_page(job_title: str, page: int, max_jobs: int, driver: webdriver.
     except Exception as e:
         logging.error(f"Error scraping page {page} for {job_title}: {e}")
         return jobs
-
 def scrape_naukri_jobs(job_titles: List[str], max_jobs: int) -> Dict[str, List[Dict[str, Any]]]:
     conn = connect_db()
     
-    # Create tables for all job titles
-    for job_title in job_titles:
-        create_table(conn, job_title)
+    # Create the unified jobs table
+    create_table(conn)
 
     jobs_by_title = {}
     total_jobs_scraped = 0
     start_time = time.time()
 
     try:
-        # Create a thread pool with 3 workers
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        # Create a thread pool with 5 workers
+        with ThreadPoolExecutor(max_workers=5) as executor:
             futures = []
             
             for job_title in job_titles:
@@ -264,20 +298,22 @@ def scrape_naukri_jobs(job_titles: List[str], max_jobs: int) -> Dict[str, List[D
                 try:
                     jobs = future.result()
                     if jobs:
-                        # Find which job title these jobs belong to
+                        # Assign jobs to predefined roles
                         for job in jobs:
-                            for job_title in job_titles:
-                                if job["job_title"].lower().find(job_title.replace("-", " ")) != -1:
-                                    jobs_by_title[job_title].append(job)
-                                    total_jobs_scraped += 1
-                                    break
+                            job_title = job["role"].replace("_", "-")
+                            jobs_by_title[job_title].append(job)
+                            total_jobs_scraped += 1
                 except Exception as e:
                     logging.error(f"Error in thread: {e}")
 
-        # Insert jobs into respective tables
+        # Insert jobs into the unified jobs table
+        all_jobs = []
         for job_title, jobs in jobs_by_title.items():
-            if jobs:
-                insert_jobs(conn, job_title, jobs)
+            all_jobs.extend(jobs)
+        if all_jobs:
+            insert_jobs(conn, all_jobs)
+
+            insert_jobs(conn, all_jobs)
 
     except Exception as e:
         logging.error(f"Failed to scrape jobs: {e}")
@@ -288,7 +324,7 @@ def scrape_naukri_jobs(job_titles: List[str], max_jobs: int) -> Dict[str, List[D
     execution_time = end_time - start_time
     logging.info(f"\nTotal jobs scraped: {total_jobs_scraped}")
     logging.info(f"Total execution time: {execution_time:.2f} seconds")
-    logging.info(f"Average time per job: {execution_time/total_jobs_scraped:.2f} seconds")
+    logging.info(f"Average time per job: {execution_time/total_jobs_scraped:.2f} seconds" if total_jobs_scraped > 0 else "No jobs scraped")
     
     return jobs_by_title
 
@@ -296,7 +332,7 @@ if __name__ == "__main__":
     start_time = time.time()
     
     # Scrape jobs for all defined roles
-    results = scrape_naukri_jobs(JOB_ROLES, max_jobs=15)  # Get 15 jobs per role
+    results = scrape_naukri_jobs(JOB_ROLES, max_jobs=50)  # Get 15 jobs per role
     
     # Print summary
     for title, jobs in results.items():
