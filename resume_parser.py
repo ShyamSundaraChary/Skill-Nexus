@@ -187,7 +187,7 @@ def process_resume(file):
     logger.info(f"Roles: {roles}")
     logger.info(f"Skills: {skills}")
     logger.info(f"Best job roles: {best_job_roles}")
-    
+    logger.info("\n\n\n\n")  # giving gap
     return {
         "personal_info": personal_info,
         "roles": roles,

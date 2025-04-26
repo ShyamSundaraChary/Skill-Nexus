@@ -3,8 +3,7 @@ class Config:
         "host": "localhost",
         "user": "shyam",
         "password": "shyam",
-        "fresher_db": "jobs_fresher",
-        "experienced_db": "jobs_experienced"
+        "database": "jobs_db"
     }
     MAX_JOBS = 50
     RECENT_DAYS = 30

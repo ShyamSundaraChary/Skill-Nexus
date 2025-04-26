@@ -122,6 +122,9 @@
                         <div class="job-meta">
                             <span class="meta-item">Posted {{ job.days_since_posted }} days ago</span>
                             <span class="meta-item">{{ job.applicants }} applicants</span>
+                            {% if job.job_type %}
+                            <span class="meta-item">{{ job.job_type }}</span>
+                            {% endif %}
                         </div>
                         <div class="skills-section">
                             <div class="match-info">
