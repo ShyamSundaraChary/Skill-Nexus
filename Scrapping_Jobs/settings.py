@@ -14,105 +14,57 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
 ]
 
+
 SKILLS_LIST = [
-    # Programming Languages
     "c", "c++", "java", "python", "javascript", "typescript", "c#", "php", "go", "rust", "swift", "kotlin", "ruby",
     "scala", "perl", "r", "matlab", "groovy", "dart", "haskell", "elixir", "clojure", "f#", "lua", "erlang",
-    
-    # Web Development
-    "html", "html5", "css", "css3", "react", "react.js", "next.js", "angular", "vue.js", "svelte", "node.js", 
-    "express.js", "django", "flask", "spring boot", "laravel", "asp.net", "fast api", "ruby on rails", "jquery", 
-    "bootstrap", "tailwind css", "material ui", "chakra ui", "styled components", "sass", "less", "webpack", 
+    "html", "html5", "css", "css3", "react", "react.js", "next.js", "angular", "vue.js", "svelte", "node.js",
+    "express.js", "django", "flask", "spring boot", "laravel", "asp.net", "fast api", "ruby on rails", "jquery",
+    "bootstrap", "tailwind css", "material ui", "chakra ui", "styled components", "sass", "less", "webpack",
     "babel", "gulp", "grunt", "npm", "yarn", "redux", "mobx", "graphql", "apollo", "socket.io", "websocket",
-    
-    # Databases
     "sql", "mysql", "postgresql", "mongodb", "firebase", "sqlite", "redis", "cassandra", "oracle db", "dynamodb",
     "neo4j", "couchdb", "elasticsearch", "kibana", "hbase", "bigtable", "cosmos db", "mariadb", "db2",
-    
-    # AI/ML/Data Science
     "machine learning", "deep learning", "data analysis", "data visualization", "tensorflow", "pytorch", "pandas",
-    "numpy", "scikit-learn", "opencv", "natural language processing (nlp)", "keras", "xgboost", "matplotlib", 
+    "numpy", "scikit-learn", "opencv", "natural language processing (nlp)", "keras", "xgboost", "matplotlib",
     "seaborn", "plotly", "d3.js", "tableau", "power bi", "spark", "hadoop", "hive", "pig", "kafka", "flink",
     "computer vision", "reinforcement learning", "statistics", "probability", "linear algebra", "time series analysis",
     "recommendation systems", "nlp", "sentiment analysis", "text mining", "data mining", "predictive modeling",
-    
-    # Cloud & DevOps
-    "aws", "google cloud", "microsoft azure", "docker", "kubernetes", "jenkins", "terraform", "git", "ci/cd", 
-    "ci/cd pipelines", "ansible", "puppet", "chef", "cloudformation", "serverless", "lambda", "ec2", "s3", 
+    "aws", "google cloud", "microsoft azure", "docker", "kubernetes", "jenkins", "terraform", "git", "ci/cd",
+    "ci/cd pipelines", "ansible", "puppet", "chef", "cloudformation", "serverless", "lambda", "ec2", "s3",
     "gcp", "gcp bigquery", "azure", "azure devops", "github actions", "gitlab ci", "circleci", "travis ci",
     "prometheus", "grafana", "elk stack", "splunk", "new relic", "datadog", "cloudwatch", "azure monitor",
-    
-    # Security
-    "ethical hacking", "penetration testing", "network security", "cryptography", "firewalls", "wireshark", 
+    "ethical hacking", "penetration testing", "network security", "cryptography", "firewalls", "wireshark",
     "metasploit", "burp suite", "nmap", "owasp", "secure coding", "security compliance", "vulnerability assessment",
     "incident response", "security monitoring", "siem", "soc", "pci dss", "gdpr", "hipaa", "iso 27001",
-    
-    # Operating Systems & Infrastructure
     "linux", "shell scripting", "windows server", "kernel development", "bash", "powershell", "unix", "ubuntu",
     "centos", "redhat", "debian", "macos", "windows", "vmware", "virtualization", "hyper-v", "active directory",
     "dns", "dhcp", "ldap", "samba", "nfs", "iscsi", "raid", "backup solutions", "disaster recovery",
-    
-    # Development Tools & Practices
     "git & github", "agile", "scrum", "design patterns", "software testing", "oop", "system design", "microservices",
     "rest", "rest apis", "restful apis", "graphql", "websockets", "soap", "grpc", "api gateway", "swagger",
     "postman", "jira", "confluence", "trello", "slack", "microsoft teams", "zoom", "code review", "pair programming",
-    "tdd", "bdd", "ddd", "clean code", "solid principles", "design patterns", "architecture patterns","Data Structures",
+    "tdd", "bdd", "ddd", "clean code", "solid principles", "design patterns", "architecture patterns", "Data Structures",
     "Algorithms", "Big O Notation", "Recursion", "Dynamic Programming", "Greedy Algorithms", "Graph Algorithms",
-    
-    # Testing
     "unit testing", "integration testing", "selenium", "pytest", "junit", "test automation", "mocking",
     "jest", "mocha", "chai", "cypress", "playwright", "testng", "qa automation", "manual testing", "performance testing",
     "load testing", "security testing", "api testing", "mobile testing", "cross-browser testing",
-    
-    # Big Data & Analytics
     "big data", "hadoop", "spark", "kafka", "flink", "hive", "pig", "data warehousing", "database fundamentals",
     "data modeling", "etl", "data integration", "business intelligence", "data governance", "data quality",
     "data lakes", "data mesh", "data fabric", "data pipelines", "airflow", "luigi", "prefect",
-    
-    # Blockchain
     "blockchain", "solidity", "ethereum", "smart contracts", "web3", "hyperledger", "truffle", "ganache",
     "metamask", "ipfs", "defi", "nft", "cryptocurrency", "consensus algorithms", "distributed ledger",
-    
-    # Game Development
     "game development", "unity", "unreal engine", "opengl", "directx", "cocos2d", "phaser", "godot",
     "game design", "3d modeling", "animation", "physics engines", "game ai", "multiplayer networking",
-    
-    # Mobile Development
     "android development", "ios development", "flutter", "react native", "xamarin", "kotlin", "swift",
     "objective-c", "android studio", "xcode", "mobile ui/ux", "mobile security", "push notifications",
     "mobile analytics", "app store optimization", "cross-platform development",
-    
-    # Embedded & IoT
     "embedded systems", "iot", "arduino", "raspberry pi", "rtos", "microcontrollers", "sensors",
     "wireless protocols", "mqtt", "coap", "zigbee", "bluetooth", "wifi", "lora", "nb-iot",
     "edge computing", "firmware development", "device drivers", "hardware programming",
-    
-    # Project Management & Soft Skills
     "project management", "team leadership", "communication", "problem solving", "critical thinking",
     "time management", "agile methodologies", "scrum master", "product owner", "stakeholder management",
     "risk management", "budget management", "resource allocation", "conflict resolution",
-    
-    # Documentation & Technical Writing
     "technical writing", "documentation", "api documentation", "user guides", "technical specifications",
     "markdown", "confluence", "readme", "wiki", "knowledge base", "documentation tools",
-    
-    # Version Control & Collaboration
     "git", "github", "gitlab", "bitbucket", "svn", "mercurial", "version control", "branching strategies",
     "code review", "pull requests", "merge conflicts", "continuous integration", "continuous deployment"
 ]
-
-
-
-JOB_ROLES = {
-    "Full Stack Developer": ["javascript", "react", "node.js", "html", "css", "sql", "mongodb", "express.js", "angular", "vue.js", "next.js", "svelte"],
-    "Python Developer": ["python", "django", "flask", "pandas", "numpy", "sql", "mysql", "postgresql", "tensorflow", "pytorch", "fastapi"],
-    "Java Developer": ["java", "spring boot", "hibernate", "sql", "mysql", "oracle", "rest", "microservices", "junit"],
-    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib"],
-    "DevOps Engineer": ["aws", "docker", "kubernetes", "jenkins", "terraform", "ansible", "cicd", "linux", "bash", "monitoring", "prometheus", "grafana", "sre"],
-    "Frontend Developer": ["javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", "tailwind css", "svelte"],
-    "Backend Developer": ["node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", "rest", "graphql", "grpc"],
-    "Mobile Developer": ["flutter", "react native", "android", "ios", "kotlin", "swift", "xamarin"],
-    "Cybersecurity Analyst": ["ethical hacking", "penetration testing", "network security", "cryptography", "wireshark", "metasploit", "nmap", "owasp", "firewalls"],
-    "Game Developer": ["unity", "unreal", "opengl", "directx", "c++", "game development"],
-    "Blockchain Developer": ["blockchain", "solidity", "ethereum", "hyperledger", "smart contracts", "web3.js", "truffle"]
-}
