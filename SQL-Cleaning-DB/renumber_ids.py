@@ -26,7 +26,7 @@ def connect_db() -> Optional[mysql.connector.connection.MySQLConnection]:
             host=Config.MYSQL["host"],
             user=Config.MYSQL["user"],
             password=Config.MYSQL["password"],
-            database="jobs_db"
+            database=Config.MYSQL["database"],
         )
     except mysql.connector.Error as e:
         logger.error(f"Database connection failed for jobs_db: {e}")

@@ -15,24 +15,46 @@ except OSError:
     exit(1)
 
 # Skills list (abbreviated for brevity, expand as needed)
-skills_list =SKILLS_LIST
+skills_list = SKILLS_LIST
 
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 patterns = [nlp(skill) for skill in set(skills_list)]
 matcher.add("SKILLS", patterns)
 
 skill_to_role_mapping = {
-    "Full Stack Developer": ["javascript", "react", "node.js", "html", "css", "sql", "mongodb", "express.js", "angular", "vue.js", "next.js", "svelte"],
-    "Python Developer": ["python", "django", "flask", "pandas", "numpy", "sql", "mysql", "postgresql", "tensorflow", "pytorch", "fastapi"],
-    "Java Developer": ["java", "spring boot", "hibernate", "sql", "mysql", "oracle", "rest", "microservices", "junit"],
-    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib"],
-    "DevOps Engineer": ["aws", "docker", "kubernetes", "jenkins", "terraform", "ansible", "cicd", "linux", "bash", "monitoring", "prometheus", "grafana", "sre"],
-    "Frontend Developer": ["javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", "tailwind css", "svelte"],
-    "Backend Developer": ["node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", "rest", "graphql", "grpc"],
-    "Mobile Developer": ["flutter", "react native", "android", "ios", "kotlin", "swift", "xamarin"],
-    "Cybersecurity Analyst": ["ethical hacking", "penetration testing", "network security", "cryptography", "wireshark", "metasploit", "nmap", "owasp", "firewalls"],
-    "Game Developer": ["unity", "unreal", "opengl", "directx", "c++", "game development"],
-    "Blockchain Developer": ["blockchain", "solidity", "ethereum", "smart contracts", "web3"]
+   "Full Stack Developer": ["javascript", "react", "node.js", "html", "css", "sql", "mongodb", "express.js", "angular", "vue.js", "next.js", "svelte", "rest apis", "graphql", "websockets", "docker"],
+   "Python Developer": ["python", "django", "flask", "pandas", "numpy", "sql", "mysql", "postgresql", "fastapi", "tensorflow", "pytorch", "matplotlib", "git", "restful apis", "celery", "redis"],
+   "Java Developer": ["java", "spring boot", "hibernate", "sql", "mysql", "oracle", "rest", "microservices", "junit", "maven", "gradle", "kafka", "docker"],
+   "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib", "sql", "nlp", "spark"],
+   "DevOps Engineer": ["aws", "docker", "kubernetes", "jenkins", "terraform", "ansible", "cicd", "linux", "bash", "monitoring", "prometheus", "grafana", "gitops", "helm", "argocd"],
+   "Frontend Developer": [
+    "javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", 
+    "tailwind css", "svelte", "redux", "typescript", "webpack", "vite", "figma"
+  ],
+  "Backend Developer": [
+    "node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", 
+    "rest", "graphql", "grpc", "redis", "jwt", "kafka"
+  ],
+  "Software Engineer": [
+    "software development", "agile", "scrum", "git", "version control", 
+    "design patterns", "oop", "data structures & algorithms", "code review", "testing", "rest apis"
+  ],
+  "AI/ML Engineer": [
+    "python", "tensorflow", "pytorch", "ml algorithms", "mlops", "scikit-learn", 
+    "data preprocessing", "model deployment", "onnx", "huggingface", "automl"
+  ],
+  "Cloud Engineer": [
+    "aws", "azure", "gcp", "ec2", "lambda", "s3", "cloudformation", "iam", "vpc", 
+    "kubernetes", "docker", "cicd", "serverless"
+  ],
+  "Mobile App Developer": [
+    "flutter", "dart", "react native", "swift", "kotlin", "java", "rest apis", 
+    "firebase", "redux", "sqlite"
+  ],
+  "Data Engineer": [
+    "python", "spark", "hadoop", "kafka", "airflow", "sql", "etl pipelines", 
+    "aws glue", "bigquery", "snowflake", "data lakes"
+  ]
 }
 
 def extract_text_from_file(file):
@@ -196,5 +218,6 @@ def process_resume(file):
         "experience_details": experience_details,
         "education": education,
         "experience_category": experience_category,
-        "best_job_roles": best_job_roles
+        "best_job_roles": best_job_roles,
+        "resume_text": resume_text  # Added for embedding computation
     }

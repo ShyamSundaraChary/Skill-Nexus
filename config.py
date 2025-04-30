@@ -5,5 +5,5 @@ class Config:
         "password": "shyam",
         "database": "jobs_db"
     }
-    MAX_JOBS = 50
+    MAX_JOBS = 40
     RECENT_DAYS = 30

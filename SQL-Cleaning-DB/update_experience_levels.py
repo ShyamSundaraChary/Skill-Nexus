@@ -1,13 +1,10 @@
 import mysql.connector
 from mysql.connector import Error
-
-class Config:
-    MYSQL = {
-        "host": "localhost",
-        "user": "shyam",
-        "password": "shyam",
-        "database": "jobs_db"
-    }
+import sys
+import os
+# Add the parent directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import Config
 
 def update_experience_levels():
     try:
@@ -25,7 +22,6 @@ def update_experience_levels():
             update_query = """
             UPDATE jobs
             SET experience_level = CASE 
-                WHEN source = 'LinkedIn' AND experience_level = 'Internship' THEN '0-0 Yrs'
                 WHEN source = 'LinkedIn' AND experience_level = 'Entry level' THEN '0-2 Yrs'
                 WHEN source = 'LinkedIn' AND experience_level = 'Associate' THEN '2-5 Yrs'
                 WHEN source = 'LinkedIn' AND experience_level = 'Mid-Senior level' THEN '5-8 Yrs'

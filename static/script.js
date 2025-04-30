@@ -71,4 +71,3 @@ document.addEventListener("DOMContentLoaded", () => {
     analyzeButton.disabled = true;
   });
 });
-

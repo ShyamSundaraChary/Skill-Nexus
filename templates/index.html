@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>AOS.init({ duration: 800, once: true, easing: 'ease-out-quad' });</script>
 </head>
 
 <body>
@@ -38,8 +35,8 @@
                                 <label for="experience_level" class="form-label">Experience Level</label>
                                 <select name="experience_level" id="experience_level" class="form-select" required>
                                     <option value="" disabled selected>Select your experience level</option>
-                                    <option value="Fresher">Fresher (0-1 years)</option>
-                                    <option value="Experienced">Experienced (5+ years)</option>
+                                    <option value="Fresher">Fresher</option>
+                                    <option value="Experienced">Experienced</option>
                                 </select>
                                 <div class="invalid-feedback">Please select an experience level</div>
                             </div>
@@ -69,23 +66,25 @@
     </section>
     <main class="container">
         {% if message %}
-        <div class="text-center py-5">
-            <div class="alert alert-warning" role="alert">{{ message }}</div>
+        <div class="text-center py-3">
+            <div class="alert alert-info" role="alert">
+                {{ message }}
+            </div>
         </div>
-        {% elif jobs %}
+        {% endif %}
+        {% if jobs %}
         <section class="py-5">
             <div class="mb-5 text-center" data-aos="fade-up">
                 <h2 class="h1 mb-3">Your Personalized Matches</h2>
                 <div class="d-flex justify-content-center gap-3">
                     <span class="badge bg-primary"><i class="fas fa-clock me-2"></i>{{ fetch_time }}</span>
-                    <span class="badge bg-success">{{ jobs | selectattr('is_premium') | list | length }} Premium
-                        Matches</span>
                 </div>
             </div>
-
+    
             <!-- Top Job Roles Section -->
             <div class="top-job-roles text-center mb-5" data-aos="fade-up" data-aos-delay="200">
                 <h3 class="h2 mb-4">Your Top Job Roles</h3>
+                {% if best_job_roles and best_job_roles|length > 0 %}
                 <div class="d-flex justify-content-center flex-wrap gap-4">
                     {% for job in best_job_roles[:3] %}
                     <div class="top-job-card p-3 shadow-sm rounded">
@@ -93,62 +92,81 @@
                     </div>
                     {% endfor %}
                 </div>
-                        </div>
+                {% else %}
+                <p class="text-muted">No specific job roles identified. Showing relevant matches.</p>
+                {% endif %}
+            </div>
+    
             <!-- Job Sources Section -->
             <div class="job-sources text-center mb-4" data-aos="fade-up" data-aos-delay="100">
-                <h2 class="h2 mb-3 text-primary font-monospace fw-bold ">Showing jobs from </h2>
+                <h2 class="h2 mb-3 text-primary font-monospace fw-bold">Showing jobs from</h2>
                 {% set source_colors = {'LinkedIn': 'bg-primary', 'Indeed': 'bg-warning', 'Naukri': 'bg-danger'} %}
-                {% for source in jobs | map(attribute='source') | unique %}
-                <span class="badge {{ source_colors[source] or 'bg-secondary' }}">{{ source }}</span>
-                {% endfor %}
+                {% set unique_sources = jobs | map(attribute='source') | unique | list %}
+                {% if unique_sources | length > 0 %}
+                    {% for source in unique_sources %}
+                    <span class="badge {{ source_colors[source] or 'bg-secondary' }}">{{ source }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span class="badge bg-secondary">Various Sources</span>
+                {% endif %}
             </div>
+    
             <!-- Job Grid -->
             <div class="job-grid">
                 {% for job in jobs %}
-                <article class="job-card {% if job.is_premium %}premium{% endif %}" data-aos="fade-up">
+                <article class="job-card" data-aos="fade-up">
                     <div class="card-header p-1">
-                        <span class="source-tag {{ source_colors[job.source] or 'bg-warning' }}">{{ job.source
-                            }}</span>
-                        {% if job.is_premium %}
-                        <span class="premium-badge bg-warning text-dark">Premium</span>
-                        {% endif %}
+                        <span class="source-tag {{ source_colors[job.source] or 'bg-warning' }}">{{ job.source }}</span>
                     </div>
                     <div class="job-content">
-                        <h3 class="job-title">{{ job.job_title }}</h3>
+                        <h3 class="job-title">{{ job.job_title or 'Untitled Job' }}</h3>
                         <div class="company-info">
-                            <span><i class="fas fa-building"></i> {{ job.company }}</span>
-                            <span class="location-info"><i class="fas fa-location-dot"></i> {{ job.location }}</span>
+                            <span><i class="fas fa-building"></i> {{ job.company or 'Unknown Company' }}</span>
+                            <span class="location-info"><i class="fas fa-location-dot"></i> {{ job.location or 'Unknown Location' }}</span>
                         </div>
                         <div class="job-meta">
-                            <span class="meta-item">Posted {{ job.days_since_posted }} days ago</span>
-                            <span class="meta-item">{{ job.applicants }} applicants</span>
+                            <span class="meta-item">
+                                {% if job.days_since_posted is defined %}
+                                    {% if job.days_since_posted == 0 %}
+                                        Posted today
+                                    {% elif job.days_since_posted == 1 %}
+                                        Posted yesterday
+                                    {% elif job.days_since_posted >= 2 and job.days_since_posted <= 6 %}
+                                        Posted {{ job.days_since_posted }} days ago
+                                    {% elif job.days_since_posted >= 7 and job.days_since_posted <= 13 %}
+                                        Posted a week ago
+                                    {% elif job.days_since_posted >= 14 and job.days_since_posted <= 20 %}
+                                        Posted 2 weeks ago
+                                    {% elif job.days_since_posted >= 21 and job.days_since_posted <= 27 %}
+                                        Posted 3 weeks ago
+                                    {% else %}
+                                        Posted a month ago
+                                    {% endif %}
+                                {% else %}
+                                    Posted recently
+                                {% endif %}
+                            </span>
+                            <span class="meta-item">{{ job.applicants or 0 }} applicants</span>
                             {% if job.job_type %}
                             <span class="meta-item">{{ job.job_type }}</span>
                             {% endif %}
                         </div>
                         <div class="skills-section">
                             <div class="match-info">
-                                <span class="match-text"><i class="fas fa-check-circle"></i> {{ job.matching_skills }}
-                                    Skill Matches</span>
+                                <span class="match-text"><i class="fas fa-check-circle"></i> Match Score</span>
                                 <div class="match-circle">
                                     <svg class="match-progress" width="100" height="100">
                                         <circle class="progress-bg" cx="50" cy="50" r="35" stroke-width="7" />
                                         <circle class="progress-bar" cx="50" cy="50" r="35" stroke-width="7"
-                                            stroke-dasharray="{{ 200* job.match_score / 100 }} 200" />
-                                        <text x="50" y="50" text-anchor="middle" class="match-percent">{{
-                                            job.match_score }}%</text>
+                                            stroke-dasharray="{{ 200 * (job.match_score or 0) / 100 }} 200" />
+                                        <text x="50" y="50" text-anchor="middle" class="match-percent">{{ job.match_score or 0 }}%</text>
                                         <text x="50" y="65" text-anchor="middle" class="match-label">Match</text>
                                     </svg>
                                 </div>
                             </div>
-                            <div class="skill-pills">
-                                {% for skill in job.matching_skills_list %}
-                                <span class="skill-pill">{{ skill }}</span>
-                                {% endfor %}
-                            </div>
                         </div>
                         <div class="job-actions">
-                            <a href="{{ job.job_link }}" target="_blank" class="btn-apply">Apply Now</a>
+                            <a href="{{ job.job_link or '#' }}" target="_blank" class="btn-apply">Apply Now</a>
                         </div>
                     </div>
                 </article>
@@ -160,15 +178,25 @@
             <div class="empty-state" data-aos="zoom-in">
                 <i class="fas fa-file-search fa-4x text-muted mb-4"></i>
                 <h3 class="h2 mb-3">Your Dream Job Awaits</h3>
-                <p class="lead text-muted mb-4">Upload your resume to unlock personalized opportunities</p>
+                <p class="lead text-muted mb-4">
+                    {% if message %}
+                        {{ message }}
+                    {% else %}
+                        Upload your resume to unlock personalized opportunities
+                    {% endif %}
+                </p>
             </div>
         </div>
         {% endif %}
     </main>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        window.addEventListener('load', () => {
+            AOS.init({ duration: 800, once: true, easing: 'ease-out-quad' });
+        });
+    </script>
 </body>
 
 </html>
