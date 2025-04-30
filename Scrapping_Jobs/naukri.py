@@ -228,7 +228,7 @@ def scrape_naukri_jobs(job_titles: List[str], max_jobs: int) -> Dict[str, List[D
 
 if __name__ == "__main__":
     start_time = time.time()
-    results = scrape_naukri_jobs(JOB_ROLES, max_jobs=100)
+    results = scrape_naukri_jobs(JOB_ROLES, max_jobs=50)
     for title, jobs in results.items():
         logging.info(f"Results for {title}:")
         logging.info(f"Total jobs found: {len(jobs)}")
