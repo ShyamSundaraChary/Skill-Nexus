@@ -247,7 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".match-percent").forEach((element) => {
     const percent = parseFloat(element.textContent);
     const progressBar = element.parentNode.querySelector(".progress-bar");
-
     if (progressBar) {
       // Calculate the stroke dashoffset based on the percentage
       const circumference = 2 * Math.PI * 35; // 2πr where r=35
@@ -334,6 +333,59 @@ document.addEventListener("DOMContentLoaded", () => {
   // Job Filtering System
   const filterPills = document.querySelectorAll(".filter-pill");
   const jobCards = document.querySelectorAll(".job-card");
+  const jobGrid = document.querySelector(".job-grid");
+
+  // Function to reset job grid to standard layout
+  function resetJobGrid() {
+    if (jobGrid) {
+      // Remove sort-enabled class to restore grid layout
+      jobGrid.classList.remove("sort-enabled");
+
+      // Reset all card styles
+      jobCards.forEach((card) => {
+        card.style.order = "";
+        card.style.width = "";
+        card.style.maxWidth = "";
+      });
+    }
+  }
+
+  // Function to show "No jobs found" message
+  function showNoJobsMessage(filter) {
+    // Get the appropriate message element
+    let messageElement;
+    if (filter === "bookmarked") {
+      messageElement = document.querySelector(".no-bookmarks-message");
+    } else {
+      messageElement = document.querySelector(".no-jobs-message");
+    }
+
+    // Hide the other message if it's visible
+    const otherMessage =
+      filter === "bookmarked"
+        ? document.querySelector(".no-jobs-message")
+        : document.querySelector(".no-bookmarks-message");
+
+    if (otherMessage) {
+      otherMessage.style.display = "none";
+    }
+
+    // Show the appropriate message
+    if (messageElement) {
+      messageElement.style.display = "block";
+    }
+  }
+
+  // Function to hide all "No jobs found" messages
+  function hideNoJobsMessages() {
+    // Hide both message types
+    const messages = document.querySelectorAll(
+      ".no-jobs-message, .no-bookmarks-message"
+    );
+    messages.forEach((msg) => {
+      msg.style.display = "none";
+    });
+  }
 
   // Filter functionality
   filterPills.forEach((pill) => {
@@ -343,60 +395,52 @@ document.addEventListener("DOMContentLoaded", () => {
       pill.classList.add("active");
 
       const filter = pill.getAttribute("data-filter");
-
-      // For sorting jobs (recent or match score)
       let jobsArray = Array.from(jobCards);
+      let visibleJobCount = 0;
+
+      // Reset grid for proper layout
+      resetJobGrid();
 
       // Apply filtering logic
-      if (filter === "recent") {
-        // Sort jobs by recency (most recent first)
-        jobsArray.sort((a, b) => {
-          const daysA = parseInt(a.getAttribute("data-days")) || 999;
-          const daysB = parseInt(b.getAttribute("data-days")) || 999;
-          return daysA - daysB;
-        });
-
-        // Show all jobs but in sorted order
-        jobsArray.forEach((card, index) => {
-          card.style.display = "";
-          card.style.order = index;
-
-          // Apply animation with staggered delay
-          setTimeout(() => {
-            card.style.opacity = "1";
-            card.style.transform = "translateY(0)";
-          }, index * 50);
-        });
-
+      if (filter === "recent" || filter === "match-high") {
         // Add temporary class to job grid for sorting
-        const jobGrid = document.querySelector(".job-grid");
         if (jobGrid) {
           jobGrid.classList.add("sort-enabled");
-          // Remove class after transition
-          setTimeout(() => {
-            jobGrid.classList.remove("sort-enabled");
-          }, jobsArray.length * 50 + 300);
         }
-
-        return;
-      } else if (filter === "match-high") {
-        // Sort jobs by match score (highest first)
-        jobsArray.sort((a, b) => {
-          const scoreA = parseInt(a.getAttribute("data-match-score")) || 0;
-          const scoreB = parseInt(b.getAttribute("data-match-score")) || 0;
-          return scoreB - scoreA;
-        });
-
-        // Show jobs with score >= 20% in sorted order
+        
+        // Sort jobs appropriately
+        if (filter === "recent") {
+          // Sort by recency
+          jobsArray.sort((a, b) => {
+            const daysA = parseInt(a.getAttribute("data-days")) || 999;
+            const daysB = parseInt(b.getAttribute("data-days")) || 999;
+            return daysA - daysB;
+          });
+        } else if (filter === "match-high") {
+          // Sort by match score
+          jobsArray.sort((a, b) => {
+            const scoreA = parseFloat(a.getAttribute("data-match-score")) || 0;
+            const scoreB = parseFloat(b.getAttribute("data-match-score")) || 0;
+            return scoreB - scoreA;
+          });
+        }
+        
+        // Show sorted jobs with staggered animation
         jobsArray.forEach((card, index) => {
-          const score = parseInt(card.getAttribute("data-match-score")) || 0;
-          const shouldShow = score >= 20;
-
-          card.style.order = index;
-
+          let shouldShow = true;
+          
+          // For match-high, optionally filter out low matches
+          if (filter === "match-high") {
+            const score = parseFloat(card.getAttribute("data-match-score")) || 0;
+            shouldShow = score >= 20;
+          }
+          
           if (shouldShow) {
-            card.style.display = "";
-            // Apply animation with staggered delay
+            card.style.display = "flex";
+            card.style.order = index;
+            visibleJobCount++;
+            
+            // Staggered animation
             setTimeout(() => {
               card.style.opacity = "1";
               card.style.transform = "translateY(0)";
@@ -409,56 +453,52 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 300);
           }
         });
-
-        // Add temporary class to job grid for sorting
-        const jobGrid = document.querySelector(".job-grid");
-        if (jobGrid) {
-          jobGrid.classList.add("sort-enabled");
-          // Remove class after transition
-          setTimeout(() => {
-            jobGrid.classList.remove("sort-enabled");
-          }, jobsArray.length * 50 + 300);
-        }
-
-        return;
+      } else {
+        // Standard filtering (all, bookmarked, source-specific)
+        jobCards.forEach((card) => {
+          // Default is to show the card
+          let shouldShow = true;
+          
+          // Apply specific filters
+          if (filter === "all") {
+            // Show all jobs
+            shouldShow = true;
+          } else if (filter === "bookmarked") {
+            // Show only bookmarked jobs
+            const jobId = card
+              .querySelector(".btn-bookmark")
+              .getAttribute("data-job-id");
+            shouldShow = bookmarkedJobs.includes(jobId);
+          } else if (filter.startsWith("source-")) {
+            // Filter by source
+            const source = filter.replace("source-", "");
+            shouldShow = card.getAttribute("data-job-source") === source;
+          }
+          
+          // Apply visibility with animation
+          if (shouldShow) {
+            card.style.display = "flex";
+            visibleJobCount++;
+            setTimeout(() => {
+              card.style.opacity = "1";
+              card.style.transform = "translateY(0)";
+            }, 10);
+          } else {
+            card.style.opacity = "0";
+            card.style.transform = "translateY(20px)";
+            setTimeout(() => {
+              card.style.display = "none";
+            }, 300);
+          }
+        });
       }
 
-      // For other filters (all, bookmarked, source-specific)
-      jobCards.forEach((card) => {
-        // Default is to show the card
-        let shouldShow = true;
-
-        // Apply specific filters
-        if (filter === "all") {
-          // Show all jobs
-          shouldShow = true;
-        } else if (filter === "bookmarked") {
-          // Show only bookmarked jobs
-          const jobId = card
-            .querySelector(".btn-bookmark")
-            .getAttribute("data-job-id");
-          shouldShow = bookmarkedJobs.includes(jobId);
-        } else if (filter.startsWith("source-")) {
-          // Filter by source
-          const source = filter.replace("source-", "");
-          shouldShow = card.getAttribute("data-job-source") === source;
-        }
-
-        // Apply visibility with animation
-        if (shouldShow) {
-          card.style.display = "";
-          setTimeout(() => {
-            card.style.opacity = "1";
-            card.style.transform = "translateY(0)";
-          }, 10);
-        } else {
-          card.style.opacity = "0";
-          card.style.transform = "translateY(20px)";
-          setTimeout(() => {
-            card.style.display = "none";
-          }, 300);
-        }
-      });
+      // Show or hide "No jobs found" message
+      if (visibleJobCount === 0) {
+        showNoJobsMessage(filter);
+      } else {
+        hideNoJobsMessages();
+      }
     });
   });
 
