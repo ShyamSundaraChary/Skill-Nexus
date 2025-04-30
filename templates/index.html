@@ -11,6 +11,11 @@
 </head>
 
 <body>
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <section class="hero-section">
         <div class="container">
             <div class="text-center">
@@ -80,7 +85,7 @@
                     <span class="badge bg-primary"><i class="fas fa-clock me-2"></i>{{ fetch_time }}</span>
                 </div>
             </div>
-    
+
             <!-- Top Job Roles Section -->
             <div class="top-job-roles text-center mb-5" data-aos="fade-up" data-aos-delay="200">
                 <h3 class="h2 mb-4">Your Top Job Roles</h3>
@@ -96,25 +101,38 @@
                 <p class="text-muted">No specific job roles identified. Showing relevant matches.</p>
                 {% endif %}
             </div>
-    
+
+            <!-- New: Filter Pills -->
+            <div class="filter-pills" data-aos="fade-up" data-aos-delay="300">
+                <button class="filter-pill active" data-filter="all">All Jobs</button>
+                <button class="filter-pill" data-filter="recent">Recent Jobs</button>
+                <button class="filter-pill" data-filter="match-high">Highest Match</button>
+                <button class="filter-pill" data-filter="bookmarked">Bookmarked</button>
+                {% set unique_sources = jobs | map(attribute='source') | unique | list %}
+                {% for source in unique_sources %}
+                <button class="filter-pill" data-filter="source-{{ source|lower }}">{{ source }}</button>
+                {% endfor %}
+            </div>
+
             <!-- Job Sources Section -->
             <div class="job-sources text-center mb-4" data-aos="fade-up" data-aos-delay="100">
                 <h2 class="h2 mb-3 text-primary font-monospace fw-bold">Showing jobs from</h2>
                 {% set source_colors = {'LinkedIn': 'bg-primary', 'Indeed': 'bg-warning', 'Naukri': 'bg-danger'} %}
                 {% set unique_sources = jobs | map(attribute='source') | unique | list %}
                 {% if unique_sources | length > 0 %}
-                    {% for source in unique_sources %}
-                    <span class="badge {{ source_colors[source] or 'bg-secondary' }}">{{ source }}</span>
-                    {% endfor %}
+                {% for source in unique_sources %}
+                <span class="badge {{ source_colors[source] or 'bg-secondary' }}">{{ source }}</span>
+                {% endfor %}
                 {% else %}
-                    <span class="badge bg-secondary">Various Sources</span>
+                <span class="badge bg-secondary">Various Sources</span>
                 {% endif %}
             </div>
-    
+
             <!-- Job Grid -->
             <div class="job-grid">
                 {% for job in jobs %}
-                <article class="job-card" data-aos="fade-up">
+                <article class="job-card" data-aos="fade-up" data-job-source="{{ job.source|lower }}"
+                    data-match-score="{{ job.match_score or 0 }}" data-days="{{ job.days_since_posted or 999 }}">
                     <div class="card-header p-1">
                         <span class="source-tag {{ source_colors[job.source] or 'bg-warning' }}">{{ job.source }}</span>
                     </div>
@@ -122,51 +140,71 @@
                         <h3 class="job-title">{{ job.job_title or 'Untitled Job' }}</h3>
                         <div class="company-info">
                             <span><i class="fas fa-building"></i> {{ job.company or 'Unknown Company' }}</span>
-                            <span class="location-info"><i class="fas fa-location-dot"></i> {{ job.location or 'Unknown Location' }}</span>
+                            <span class="location-info"><i class="fas fa-location-dot"></i> {{ job.location or 'Unknown
+                                Location' }}</span>
                         </div>
                         <div class="job-meta">
                             <span class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
                                 {% if job.days_since_posted is defined %}
-                                    {% if job.days_since_posted == 0 %}
-                                        Posted today
-                                    {% elif job.days_since_posted == 1 %}
-                                        Posted yesterday
-                                    {% elif job.days_since_posted >= 2 and job.days_since_posted <= 6 %}
-                                        Posted {{ job.days_since_posted }} days ago
-                                    {% elif job.days_since_posted >= 7 and job.days_since_posted <= 13 %}
-                                        Posted a week ago
-                                    {% elif job.days_since_posted >= 14 and job.days_since_posted <= 20 %}
-                                        Posted 2 weeks ago
-                                    {% elif job.days_since_posted >= 21 and job.days_since_posted <= 27 %}
-                                        Posted 3 weeks ago
-                                    {% else %}
-                                        Posted a month ago
-                                    {% endif %}
-                                {% else %}
-                                    Posted recently
-                                {% endif %}
-                            </span>
-                            <span class="meta-item">{{ job.applicants or 0 }} applicants</span>
-                            {% if job.job_type %}
-                            <span class="meta-item">{{ job.job_type }}</span>
-                            {% endif %}
+                                {% if job.days_since_posted == 0 %}
+                                Posted today
+                                {% elif job.days_since_posted == 1 %}
+                                Posted yesterday
+                                {% elif job.days_since_posted >= 2 and job.days_since_posted <= 6 %} Posted {{
+                                    job.days_since_posted }} days ago {% elif job.days_since_posted>= 7 and
+                                    job.days_since_posted <= 13 %} Posted a week ago {% elif job.days_since_posted>= 14
+                                        and job.days_since_posted <= 20 %} Posted 2 weeks ago {% elif
+                                            job.days_since_posted>= 21 and job.days_since_posted <= 27 %} Posted 3 weeks
+                                                ago {% else %} Posted a month ago {% endif %} {% else %} Posted recently
+                                                {% endif %} </span>
+                                                <span class="meta-item"><i class="fas fa-users"></i> {{ job.applicants
+                                                    or 0 }} applicants</span>
+                                                {% if job.job_type %}
+                                                <span class="meta-item"><i class="fas fa-briefcase"></i> {{ job.job_type
+                                                    }}</span>
+                                                {% endif %}
                         </div>
-                        <div class="skills-section">
-                            <div class="match-info">
-                                <span class="match-text"><i class="fas fa-check-circle"></i> Match Score</span>
-                                <div class="match-circle">
-                                    <svg class="match-progress" width="100" height="100">
-                                        <circle class="progress-bg" cx="50" cy="50" r="35" stroke-width="7" />
-                                        <circle class="progress-bar" cx="50" cy="50" r="35" stroke-width="7"
-                                            stroke-dasharray="{{ 200 * (job.match_score or 0) / 100 }} 200" />
-                                        <text x="50" y="50" text-anchor="middle" class="match-percent">{{ job.match_score or 0 }}%</text>
-                                        <text x="50" y="65" text-anchor="middle" class="match-label">Match</text>
-                                    </svg>
-                                </div>
+
+                        <!-- New match score card design -->
+                        <div class="match-score-card">
+                            <div class="skills-matches">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{% if job.matched_skills and job.matched_skills|length > 0 %}
+                                    {{ job.matched_skills|length }}
+                                    {% else %}0{% endif %} Skill Matches</span>
+                            </div>
+                            <div class="score-circle">
+                                <div class="percent-value">{{ job.match_score or 0 }}%</div>
+                                <div class="percent-label">Match</div>
                             </div>
                         </div>
+
+                        <!-- Matched Skills Section -->
+                        <div class="matched-skills-section">
+                            <div class="skills-header">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Matched Skills</span>
+                            </div>
+                            <div class="skills-list">
+                                {% if job.matched_skills and job.matched_skills|length > 0 %}
+                                {% for skill in job.matched_skills[:5] %}
+                                <span class="skill-badge">{{ skill }}</span>
+                                {% endfor %}
+                                {% if job.matched_skills|length > 5 %}
+                                <span class="skill-badge more-skills">+{{ job.matched_skills|length - 5 }} more</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="no-skills">No specific skills matched</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
                         <div class="job-actions">
                             <a href="{{ job.job_link or '#' }}" target="_blank" class="btn-apply">Apply Now</a>
+                            <button class="btn-bookmark" aria-label="Bookmark this job" data-job-id="{{ job.id }}">
+                                <i class="far fa-bookmark"></i>
+                            </button>
                         </div>
                     </div>
                 </article>
@@ -180,15 +218,76 @@
                 <h3 class="h2 mb-3">Your Dream Job Awaits</h3>
                 <p class="lead text-muted mb-4">
                     {% if message %}
-                        {{ message }}
+                    {{ message }}
                     {% else %}
-                        Upload your resume to unlock personalized opportunities
+                    Upload your resume to unlock personalized opportunities
                     {% endif %}
                 </p>
             </div>
         </div>
         {% endif %}
     </main>
+
+    <!-- New Footer Section -->
+    <footer class="footer mt-5 py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h4 class="text-primary fw-bold mb-4">SkillSync</h4>
+                    <p class="text-muted">Leveraging AI to connect you with your perfect career match. Our intelligent
+                        job matching system analyzes your skills and preferences to find opportunities tailored just for
+                        you.</p>
+                    <div class="social-links mt-4">
+                        <a href="#" class="me-3"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
+                    <h5 class="text-primary fw-bold mb-4">Features</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Resume Parsing</a></li>
+                        <li class="mb-2"><a href="#">Job Matching</a></li>
+                        <li class="mb-2"><a href="#">Skill Analysis</a></li>
+                        <li class="mb-2"><a href="#">Career Insights</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
+                    <h5 class="text-primary fw-bold mb-4">Resources</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Blog</a></li>
+                        <li class="mb-2"><a href="#">Career Tips</a></li>
+                        <li class="mb-2"><a href="#">Interview Prep</a></li>
+                        <li class="mb-2"><a href="#">Resume Templates</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h5 class="text-primary fw-bold mb-4">Stay Updated</h5>
+                    <p class="text-muted mb-3">Subscribe to our newsletter for the latest job insights and career tips.
+                    </p>
+                    <form class="subscribe-form">
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" placeholder="Your email address"
+                                aria-label="Your email address">
+                            <button class="btn btn-primary" type="button">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0 text-muted">&copy; 2023 SkillSync. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+                    <a href="#" class="text-muted me-3">Privacy Policy</a>
+                    <a href="#" class="text-muted me-3">Terms of Service</a>
+                    <a href="#" class="text-muted">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>

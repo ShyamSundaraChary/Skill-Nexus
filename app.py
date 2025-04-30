@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify, session
 from config import Config
 from database import fetch_jobs_from_db
 from job_processor import match_jobs_with_resume
@@ -7,8 +7,13 @@ import logging
 from datetime import datetime, date
 from dateutil.parser import parse as parse_date
 import time
+import os
+import uuid
+import re
+from collections import Counter
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'skillsync_secret_key')
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -36,12 +41,21 @@ def upload_resume():
         return render_template('index.html', jobs=[], message="No file selected", best_job_roles=[]), 400
     
     # Edge case: Validate file type
-    if not file or not file.filename.endswith(('.pdf', '.docx')):
+    if not file or not file.filename.lower().endswith(('.pdf', '.docx')):
         logger.error(f"Invalid file type uploaded: {file.filename}")
         return render_template('index.html', jobs=[], message="Only PDF or DOCX files are allowed", best_job_roles=[]), 400
 
+    # Validate file size (5MB max)
+    if file.content_length and file.content_length > 5 * 1024 * 1024:
+        logger.error(f"File too large: {file.content_length} bytes")
+        return render_template('index.html', jobs=[], message="File size should be less than 5MB", best_job_roles=[]), 400
+
     # Process resume
-    resume_data = process_resume(file)
+    try:
+        resume_data = process_resume(file)
+    except Exception as e:
+        logger.error(f"Resume processing error: {e}")
+        return render_template('index.html', jobs=[], message="Failed to process resume. Please try again.", best_job_roles=[]), 500
     
     # Edge case: Check if resume processing failed
     if not resume_data:
@@ -51,7 +65,26 @@ def upload_resume():
     resume_text = resume_data.get('resume_text', '')
     experience_category = resume_data.get('experience_category', None)
     best_job_roles = resume_data.get('best_job_roles', [])
-    preferred_location = request.form.get('location', None)
+    
+    # Extract skills from resume
+    resume_skills = extract_skills(resume_text)
+    
+    # Get user preferences from form
+    preferred_location = request.form.get('location', '').strip()
+    experience_level = request.form.get('experience_level', None)
+    
+    # Use form input for experience if available, otherwise use the parsed value
+    if experience_level:
+        experience_category = experience_level
+    
+    # Store user preferences in session
+    session['preferred_location'] = preferred_location
+    session['experience_category'] = experience_category
+    session['resume_data'] = {
+        'text': resume_text[:1000],  # Store a preview for future use
+        'best_job_roles': best_job_roles,
+        'skills': resume_skills
+    }
 
     # Edge case: Validate experience_level
     if not experience_category:
@@ -71,20 +104,52 @@ def upload_resume():
     no_jobs_found = len(raw_jobs) == 0
     if no_jobs_found:
         logger.info("No jobs found in database")
-        return render_template('index.html', jobs=[], message="No jobs found in the database.", best_job_roles=best_job_roles)
+        return render_template('index.html', jobs=[], message="No jobs found matching your criteria. Try broadening your search.", best_job_roles=best_job_roles)
 
     # Check for experience mismatch
     experience_mismatch = experience_category and not any(is_experience_match(job['experience_level'], experience_category) for job in raw_jobs)
     
-    # Set message based on experience mismatch only
+    # Set message based on experience mismatch
     message = None
     if experience_mismatch:
-        message = "Experienced mismatched"
+        message = "Experience levels don't match closely. Consider adjusting your experience level."
 
     # Match jobs with resume
     match_start = time.time()
     try:
         jobs = match_jobs_with_resume(resume_text, raw_jobs)
+        
+        # Add skill matching
+        for job in jobs:
+            # Extract skills from job description
+            job_description = job.get('job_description', '') or ''
+            job_skills = extract_skills(job_description)
+            
+            # Find matched skills
+            matched_skills = []
+            if resume_skills and job_skills:
+                matched_skills = list(set(resume_skills) & set(job_skills))
+                
+            # Sort matched skills by relevance/frequency
+            if matched_skills:
+                # Count occurrences in job description to determine relevance
+                skill_counts = Counter()
+                for skill in matched_skills:
+                    # Count occurrences with word boundaries
+                    pattern = r'\b' + re.escape(skill) + r'\b'
+                    skill_counts[skill] = len(re.findall(pattern, job_description, re.IGNORECASE))
+                
+                # Sort by frequency
+                matched_skills = [skill for skill, _ in skill_counts.most_common()]
+            
+            job['matched_skills'] = matched_skills
+            
+            # Update match score based on skill matching
+            if matched_skills:
+                # Adjust match score: 
+                # Base score (from the job_processor) + bonus for matched skills (max 20% bonus)
+                skill_bonus = min(len(matched_skills) * 4, 20)  # 4% per skill, max 20%
+                job['match_score'] = min(job.get('match_score', 0) + skill_bonus, 100)  # Cap at 100%
     except Exception as e:
         logger.error(f"Job matching failed: {e}")
         return render_template('index.html', jobs=[], message="Error matching jobs. Please try again.", best_job_roles=best_job_roles), 500
@@ -96,9 +161,13 @@ def upload_resume():
         logger.info("No jobs matched after processing")
         return render_template('index.html', jobs=[], message="No jobs matched your resume.", best_job_roles=best_job_roles)
 
-   # Pre-compute days since posting
+    # Pre-compute days since posting
     today = date.today()
     for job in jobs:
+        # Ensure job has an ID for bookmarking
+        if 'id' not in job or not job['id']:
+            job['id'] = str(uuid.uuid4())
+            
         posted_date = job.get('posted_date')
         try:
             if isinstance(posted_date, str):
@@ -121,6 +190,50 @@ def upload_resume():
     logger.info(f"Returning {len(jobs)} jobs, total processing time: {total_time:.2f} seconds")
 
     return render_template('index.html', jobs=jobs, fetch_time=fetch_time, best_job_roles=best_job_roles, message=message)
+
+@app.route('/api/bookmark', methods=['POST'])
+def bookmark_job():
+    """API endpoint to handle job bookmarking."""
+    try:
+        data = request.json
+        job_id = data.get('job_id')
+        
+        if not job_id:
+            return jsonify({'success': False, 'message': 'Job ID is required'}), 400
+            
+        # Here you would typically store the bookmark in a database
+        # For now, we'll just return success
+        return jsonify({'success': True, 'message': 'Job bookmarked successfully'})
+    except Exception as e:
+        logger.error(f"Bookmark error: {e}")
+        return jsonify({'success': False, 'message': 'Failed to bookmark job'}), 500
+
+def extract_skills(text):
+    """Extract skills from text using common skill keywords."""
+    common_skills = [
+        "Python", "Java", "JavaScript", "C++", "C#", "Ruby", "PHP", "Swift", "Kotlin", "TypeScript",
+        "React", "Angular", "Vue.js", "Node.js", "Django", "Flask", "Spring", "ASP.NET", "Laravel", 
+        "SQL", "MySQL", "PostgreSQL", "MongoDB", "Oracle", "NoSQL", "Redis", "Firebase",
+        "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "Jenkins", "Git", "GitHub", "GitLab",
+        "HTML", "CSS", "SASS", "LESS", "Bootstrap", "Tailwind CSS", "Material UI",
+        "Machine Learning", "Deep Learning", "AI", "Data Science", "TensorFlow", "PyTorch", "Keras",
+        "DevOps", "CI/CD", "Agile", "Scrum", "Jira", "Confluence", "Product Management",
+        "UI/UX", "Figma", "Sketch", "Adobe XD", "Photoshop", "Illustrator",
+        "Communication", "Leadership", "Problem Solving", "Critical Thinking", "Teamwork"
+    ]
+    
+    # Extract skills from text
+    found_skills = []
+    text_lower = text.lower()
+    
+    for skill in common_skills:
+        # Look for whole word matches with word boundaries
+        pattern = r'\b' + re.escape(skill.lower()) + r'\b'
+        if re.search(pattern, text_lower):
+            found_skills.append(skill)
+    
+    return found_skills
+
 def is_experience_match(job_exp_level, user_exp_category):
     """Check if job experience level matches user experience category."""
     if not job_exp_level or not user_exp_category:
