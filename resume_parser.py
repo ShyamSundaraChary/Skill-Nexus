@@ -27,34 +27,12 @@ skill_to_role_mapping = {
    "Java Developer": ["java", "spring boot", "hibernate", "sql", "mysql", "oracle", "rest", "microservices", "junit", "maven", "gradle", "kafka", "docker"],
    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib", "sql", "nlp", "spark"],
    "DevOps Engineer": ["aws", "docker", "kubernetes", "jenkins", "terraform", "ansible", "cicd", "linux", "bash", "monitoring", "prometheus", "grafana", "gitops", "helm", "argocd"],
-   "Frontend Developer": [
-    "javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", 
-    "tailwind css", "svelte", "redux", "typescript", "webpack", "vite", "figma"
-  ],
-  "Backend Developer": [
-    "node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", 
-    "rest", "graphql", "grpc", "redis", "jwt", "kafka"
-  ],
-  "Software Engineer": [
-    "software development", "agile", "scrum", "git", "version control", 
-    "design patterns", "oop", "data structures & algorithms", "code review", "testing", "rest apis"
-  ],
-  "AI/ML Engineer": [
-    "python", "tensorflow", "pytorch", "ml algorithms", "mlops", "scikit-learn", 
-    "data preprocessing", "model deployment", "onnx", "huggingface", "automl"
-  ],
-  "Cloud Engineer": [
-    "aws", "azure", "gcp", "ec2", "lambda", "s3", "cloudformation", "iam", "vpc", 
-    "kubernetes", "docker", "cicd", "serverless"
-  ],
-  "Mobile App Developer": [
-    "flutter", "dart", "react native", "swift", "kotlin", "java", "rest apis", 
-    "firebase", "redux", "sqlite"
-  ],
-  "Data Engineer": [
-    "python", "spark", "hadoop", "kafka", "airflow", "sql", "etl pipelines", 
-    "aws glue", "bigquery", "snowflake", "data lakes"
-  ]
+   "Frontend Developer": ["javascript", "react", "angular", "vue.js", "html", "css", "jquery", "bootstrap", "tailwind css", "svelte", "redux", "typescript", "webpack", "vite", "figma"],
+   "Backend Developer": ["node.js", "express.js", "django", "flask", "spring boot", "laravel", "sql", "mongodb", "rest", "graphql", "grpc", "redis", "jwt", "kafka"],
+   "Software Engineer": ["software development", "agile", "scrum", "git", "version control", "design patterns", "oop", "data structures & algorithms", "code review", "testing", "rest apis"],
+   "AI/ML Engineer": [ "python", "tensorflow", "pytorch", "ml algorithms", "mlops", "scikit-learn", "data preprocessing", "model deployment", "onnx", "huggingface", "automl"],
+   "Data Engineer": ["python", "spark", "hadoop", "kafka", "airflow", "sql", "etl pipelines", "aws glue", "bigquery", "snowflake", "data lakes"],
+   "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib", "sql", "nlp"],
 }
 
 def extract_text_from_file(file):

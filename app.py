@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify
 from config import Config
 from database import fetch_jobs_from_db
 from job_processor import match_jobs_with_resume
@@ -11,9 +11,9 @@ import os
 import uuid
 import re
 from collections import Counter
+from Scrapping_Jobs.settings import SKILLS_LIST
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'skillsync_secret_key')
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -76,15 +76,6 @@ def upload_resume():
     # Use form input for experience if available, otherwise use the parsed value
     if experience_level:
         experience_category = experience_level
-    
-    # Store user preferences in session
-    session['preferred_location'] = preferred_location
-    session['experience_category'] = experience_category
-    session['resume_data'] = {
-        'text': resume_text[:1000],  # Store a preview for future use
-        'best_job_roles': best_job_roles,
-        'skills': resume_skills
-    }
 
     # Edge case: Validate experience_level
     if not experience_category:
@@ -164,7 +155,7 @@ def upload_resume():
     # Pre-compute days since posting
     today = date.today()
     for job in jobs:
-        # Ensure job has an ID for bookmarking
+        # Ensure job has an ID for display
         if 'id' not in job or not job['id']:
             job['id'] = str(uuid.uuid4())
             
@@ -191,36 +182,9 @@ def upload_resume():
 
     return render_template('index.html', jobs=jobs, fetch_time=fetch_time, best_job_roles=best_job_roles, message=message)
 
-@app.route('/api/bookmark', methods=['POST'])
-def bookmark_job():
-    """API endpoint to handle job bookmarking."""
-    try:
-        data = request.json
-        job_id = data.get('job_id')
-        
-        if not job_id:
-            return jsonify({'success': False, 'message': 'Job ID is required'}), 400
-            
-        # Here you would typically store the bookmark in a database
-        # For now, we'll just return success
-        return jsonify({'success': True, 'message': 'Job bookmarked successfully'})
-    except Exception as e:
-        logger.error(f"Bookmark error: {e}")
-        return jsonify({'success': False, 'message': 'Failed to bookmark job'}), 500
-
 def extract_skills(text):
     """Extract skills from text using common skill keywords."""
-    common_skills = [
-        "Python", "Java", "JavaScript", "C++", "C#", "Ruby", "PHP", "Swift", "Kotlin", "TypeScript",
-        "React", "Angular", "Vue.js", "Node.js", "Django", "Flask", "Spring", "ASP.NET", "Laravel", 
-        "SQL", "MySQL", "PostgreSQL", "MongoDB", "Oracle", "NoSQL", "Redis", "Firebase",
-        "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "Jenkins", "Git", "GitHub", "GitLab",
-        "HTML", "CSS", "SASS", "LESS", "Bootstrap", "Tailwind CSS", "Material UI",
-        "Machine Learning", "Deep Learning", "AI", "Data Science", "TensorFlow", "PyTorch", "Keras",
-        "DevOps", "CI/CD", "Agile", "Scrum", "Jira", "Confluence", "Product Management",
-        "UI/UX", "Figma", "Sketch", "Adobe XD", "Photoshop", "Illustrator",
-        "Communication", "Leadership", "Problem Solving", "Critical Thinking", "Teamwork"
-    ]
+    common_skills = SKILLS_LIST
     
     # Extract skills from text
     found_skills = []

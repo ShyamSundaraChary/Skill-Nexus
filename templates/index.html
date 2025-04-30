@@ -107,7 +107,6 @@
                 <button class="filter-pill active" data-filter="all">All Jobs</button>
                 <button class="filter-pill" data-filter="recent">Recent Jobs</button>
                 <button class="filter-pill" data-filter="match-high">Highest Match</button>
-                <button class="filter-pill" data-filter="bookmarked">Bookmarked</button>
                 {% set unique_sources = jobs | map(attribute='source') | unique | list %}
                 {% for source in unique_sources %}
                 <button class="filter-pill" data-filter="source-{{ source|lower }}">{{ source }}</button>
@@ -131,8 +130,10 @@
             <!-- Job Grid -->
             <div class="job-grid">
                 {% for job in jobs %}
-                <article class="job-card" data-aos="fade-up" data-job-source="{{ job.source|lower }}"
-                    data-match-score="{{ job.match_score or 0 }}" data-days="{{ job.days_since_posted or 999 }}">
+                <article class="job-card {% if loop.index > 10 %}hidden-job{% endif %}" data-aos="fade-up"
+                    data-job-source="{{ job.source|lower }}" data-match-score="{{ job.match_score or 0 }}"
+                    data-days="{{ job.days_since_posted or 999 }}" data-index="{{ loop.index }}"
+                    style="--match-percent: {{ job.match_score or 0 }}%;">
                     <div class="card-header p-1">
                         <span class="source-tag {{ source_colors[job.source] or 'bg-warning' }}">{{ job.source }}</span>
                     </div>
@@ -202,9 +203,6 @@
 
                         <div class="job-actions">
                             <a href="{{ job.job_link or '#' }}" target="_blank" class="btn-apply">Apply Now</a>
-                            <button class="btn-bookmark" aria-label="Bookmark this job" data-job-id="{{ job.id }}">
-                                <i class="far fa-bookmark"></i>
-                            </button>
                         </div>
                     </div>
                 </article>
@@ -217,13 +215,14 @@
                     <p class="text-muted">Try different filter criteria</p>
                 </div>
 
-                <!-- No Bookmarks Message - Initially hidden, shown by JavaScript when needed -->
-                <div class="no-bookmarks-message" style="display: none;">
-                    <i class="fas fa-bookmark fa-3x mb-3"></i>
-                    <h3>No Bookmarked Jobs</h3>
-                    <p class="text-muted">Jobs you bookmark will appear here</p>
-                </div>
             </div>
+
+            <!-- Show More Button - only visible if there are more than 10 jobs -->
+            {% if jobs|length > 10 %}
+            <button id="showMoreJobs" class="show-more-btn">
+                <i class="fas fa-plus-circle me-2"></i>Show More Jobs
+            </button>
+            {% endif %}
         </section>
         {% else %}
         <div class="text-center py-9">
@@ -274,18 +273,6 @@
                         <li class="mb-2"><a href="#">Interview Prep</a></li>
                         <li class="mb-2"><a href="#">Resume Templates</a></li>
                     </ul>
-                </div>
-                <div class="col-lg-4 col-md-4">
-                    <h5 class="text-primary fw-bold mb-4">Stay Updated</h5>
-                    <p class="text-muted mb-3">Subscribe to our newsletter for the latest job insights and career tips.
-                    </p>
-                    <form class="subscribe-form">
-                        <div class="input-group mb-3">
-                            <input type="email" class="form-control" placeholder="Your email address"
-                                aria-label="Your email address">
-                            <button class="btn btn-primary" type="button">Subscribe</button>
-                        </div>
-                    </form>
                 </div>
             </div>
             <hr class="my-4">

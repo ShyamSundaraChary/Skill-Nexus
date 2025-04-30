@@ -5,21 +5,20 @@ AOS.init({
   easing: "ease-out-quad",
 });
 
-// Dynamic card hover effects
-document.querySelectorAll(".job-card").forEach((card) => {
-  card.addEventListener("mousemove", (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    card.style.setProperty("--mouse-x", `${x}px`);
-    card.style.setProperty("--mouse-y", `${y}px`);
-  });
-});
-
 // Update match percentage indicator
-document.querySelectorAll(".match-percent").forEach((element) => {
-  const percent = parseFloat(element.textContent);
-  element.style.setProperty("--match-percent", `${percent}%`);
+document.querySelectorAll(".score-circle").forEach((element) => {
+  const percentValue = element.querySelector(".percent-value");
+  if (percentValue) {
+    const percent = parseFloat(percentValue.textContent);
+    element.style.setProperty("--match-percent", `${percent}%`);
+
+    // Add subtle animation
+    if (percent > 0) {
+      setTimeout(() => {
+        element.classList.add("animated");
+      }, 300);
+    }
+  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -241,9 +240,31 @@ document.addEventListener("DOMContentLoaded", () => {
       card.style.setProperty("--mouse-x", `${x}px`);
       card.style.setProperty("--mouse-y", `${y}px`);
     });
+
+    card.addEventListener("mouseleave", () => {
+      // Reset the glow position when mouse leaves
+      card.style.setProperty("--mouse-x", "20%");
+      card.style.setProperty("--mouse-y", "20%");
+    });
   });
 
   // Update match percentage indicator
+  document.querySelectorAll(".score-circle").forEach((element) => {
+    const percentValue = element.querySelector(".percent-value");
+    if (percentValue) {
+      const percent = parseFloat(percentValue.textContent);
+      element.style.setProperty("--match-percent", `${percent}%`);
+
+      // Add subtle animation
+      if (percent > 0) {
+        setTimeout(() => {
+          element.classList.add("animated");
+        }, 300);
+      }
+    }
+  });
+
+  // Legacy support for the old method
   document.querySelectorAll(".match-percent").forEach((element) => {
     const percent = parseFloat(element.textContent);
     const progressBar = element.parentNode.querySelector(".progress-bar");
@@ -253,81 +274,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const offset = circumference - (percent / 100) * circumference;
       progressBar.style.strokeDashoffset = offset;
     }
-  });
-
-  // Job Bookmarking System
-  const bookmarkButtons = document.querySelectorAll(".btn-bookmark");
-
-  // Load existing bookmarks from localStorage
-  const bookmarkedJobs =
-    JSON.parse(localStorage.getItem("bookmarkedJobs")) || [];
-
-  // Initialize bookmark buttons
-  bookmarkButtons.forEach((button) => {
-    const jobId = button.getAttribute("data-job-id");
-    const icon = button.querySelector("i");
-
-    // Set initial state based on localStorage
-    if (bookmarkedJobs.includes(jobId)) {
-      icon.classList.replace("far", "fas");
-      button.classList.add("bookmarked");
-    }
-
-    button.addEventListener("click", () => {
-      // Toggle bookmark state
-      if (icon.classList.contains("far")) {
-        // Add bookmark
-        icon.classList.replace("far", "fas");
-        button.classList.add("bookmarked");
-
-        // Send API request to save bookmark
-        fetch("/api/bookmark", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ job_id: jobId }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              // Store in localStorage if not already there
-              if (!bookmarkedJobs.includes(jobId)) {
-                bookmarkedJobs.push(jobId);
-                localStorage.setItem(
-                  "bookmarkedJobs",
-                  JSON.stringify(bookmarkedJobs)
-                );
-              }
-            } else {
-              console.error("Failed to save bookmark");
-              // Revert the UI state
-              icon.classList.replace("fas", "far");
-              button.classList.remove("bookmarked");
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            // Revert the UI state
-            icon.classList.replace("fas", "far");
-            button.classList.remove("bookmarked");
-          });
-      } else {
-        // Remove bookmark
-        icon.classList.replace("fas", "far");
-        button.classList.remove("bookmarked");
-
-        // Remove from localStorage
-        const index = bookmarkedJobs.indexOf(jobId);
-        if (index > -1) {
-          bookmarkedJobs.splice(index, 1);
-          localStorage.setItem(
-            "bookmarkedJobs",
-            JSON.stringify(bookmarkedJobs)
-          );
-        }
-      }
-    });
   });
 
   // Job Filtering System
@@ -387,7 +333,57 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Filter functionality
+  // Show More Jobs Functionality
+  const showMoreBtn = document.getElementById("showMoreJobs");
+  const initialHiddenJobs = document.querySelectorAll(".hidden-job");
+
+  if (showMoreBtn && initialHiddenJobs.length > 0) {
+    // Set initial count of visible and hidden jobs
+    let visibleJobCount = 10;
+    const totalJobs = visibleJobCount + initialHiddenJobs.length;
+
+    // Update button text to show counts
+    showMoreBtn.innerHTML = `<i class="fas fa-plus-circle me-2"></i>Show More Jobs (${visibleJobCount}/${totalJobs})`;
+
+    showMoreBtn.addEventListener("click", function () {
+      // Get the current hidden jobs (as they may have changed due to filtering)
+      const currentHiddenJobs = document.querySelectorAll(".hidden-job");
+
+      // Show next batch of hidden jobs (up to 10 more)
+      const jobsToShow = Array.from(currentHiddenJobs).slice(0, 10);
+      let newlyShown = 0;
+
+      jobsToShow.forEach((job) => {
+        job.classList.remove("hidden-job");
+
+        // Animate the newly visible jobs
+        job.style.opacity = "0";
+        job.style.transform = "translateY(20px)";
+
+        setTimeout(() => {
+          job.style.opacity = "1";
+          job.style.transform = "translateY(0)";
+        }, 50 * newlyShown);
+
+        newlyShown++;
+      });
+
+      // Update visible job count
+      visibleJobCount += newlyShown;
+
+      // Update button text
+      const remainingHiddenJobs =
+        document.querySelectorAll(".hidden-job").length;
+      showMoreBtn.innerHTML = `<i class="fas fa-plus-circle me-2"></i>Show More Jobs (${visibleJobCount}/${totalJobs})`;
+
+      // Hide button if all jobs are shown
+      if (remainingHiddenJobs === 0) {
+        showMoreBtn.style.display = "none";
+      }
+    });
+  }
+
+  // Handle filter buttons with show more functionality
   filterPills.forEach((pill) => {
     pill.addEventListener("click", () => {
       // Update active state
@@ -401,13 +397,18 @@ document.addEventListener("DOMContentLoaded", () => {
       // Reset grid for proper layout
       resetJobGrid();
 
+      // Hide the show more button when filters are applied
+      if (showMoreBtn) {
+        showMoreBtn.style.display = "none";
+      }
+
       // Apply filtering logic
       if (filter === "recent" || filter === "match-high") {
         // Add temporary class to job grid for sorting
         if (jobGrid) {
           jobGrid.classList.add("sort-enabled");
         }
-        
+
         // Sort jobs appropriately
         if (filter === "recent") {
           // Sort by recency
@@ -424,22 +425,25 @@ document.addEventListener("DOMContentLoaded", () => {
             return scoreB - scoreA;
           });
         }
-        
+
         // Show sorted jobs with staggered animation
         jobsArray.forEach((card, index) => {
           let shouldShow = true;
-          
+
           // For match-high, optionally filter out low matches
           if (filter === "match-high") {
-            const score = parseFloat(card.getAttribute("data-match-score")) || 0;
+            const score =
+              parseFloat(card.getAttribute("data-match-score")) || 0;
             shouldShow = score >= 20;
           }
-          
+
           if (shouldShow) {
+            // Remove hidden-job class when filtering
+            card.classList.remove("hidden-job");
             card.style.display = "flex";
             card.style.order = index;
             visibleJobCount++;
-            
+
             // Staggered animation
             setTimeout(() => {
               card.style.opacity = "1";
@@ -454,27 +458,44 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
       } else {
-        // Standard filtering (all, bookmarked, source-specific)
+        // Standard filtering (all, source-specific)
         jobCards.forEach((card) => {
           // Default is to show the card
           let shouldShow = true;
-          
+
           // Apply specific filters
           if (filter === "all") {
-            // Show all jobs
-            shouldShow = true;
-          } else if (filter === "bookmarked") {
-            // Show only bookmarked jobs
-            const jobId = card
-              .querySelector(".btn-bookmark")
-              .getAttribute("data-job-id");
-            shouldShow = bookmarkedJobs.includes(jobId);
+            // For "all" filter, only show first 10 and restore hidden-job class for others
+            jobCards.forEach((card) => {
+              const index = parseInt(card.getAttribute("data-index")) || 0;
+              if (index > 10) {
+                card.classList.add("hidden-job");
+              } else {
+                card.classList.remove("hidden-job");
+              }
+            });
+
+            // Set shouldShow based on index for current card
+            const index = parseInt(card.getAttribute("data-index")) || 0;
+            shouldShow = index <= 10;
+
+            // Show the show more button again for "all" filter if needed
+            if (showMoreBtn) {
+              const currentHiddenJobs =
+                document.querySelectorAll(".hidden-job");
+              if (currentHiddenJobs.length > 0) {
+                showMoreBtn.style.display = "block";
+                showMoreBtn.innerHTML = `<i class="fas fa-plus-circle me-2"></i>Show More Jobs (10/${jobCards.length})`;
+              }
+            }
           } else if (filter.startsWith("source-")) {
-            // Filter by source
+            // Filter by source - show all matching jobs
             const source = filter.replace("source-", "");
             shouldShow = card.getAttribute("data-job-source") === source;
+            // Remove hidden-job class when filtering by source
+            card.classList.remove("hidden-job");
           }
-          
+
           // Apply visibility with animation
           if (shouldShow) {
             card.style.display = "flex";
@@ -501,43 +522,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-
-  // Newsletter subscription
-  const subscribeForm = document.querySelector(".subscribe-form");
-  if (subscribeForm) {
-    subscribeForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const emailInput = this.querySelector('input[type="email"]');
-      const email = emailInput.value.trim();
-
-      if (!email) {
-        alert("Please enter your email address");
-        return;
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert("Please enter a valid email address");
-        return;
-      }
-
-      // Here you would typically send this to an API
-      // For now, just show success message
-      const button = this.querySelector("button");
-      const originalText = button.textContent;
-
-      button.textContent = "Subscribed!";
-      button.classList.add("btn-success");
-      emailInput.disabled = true;
-
-      // Reset after 3 seconds
-      setTimeout(() => {
-        emailInput.value = "";
-        emailInput.disabled = false;
-        button.textContent = originalText;
-        button.classList.remove("btn-success");
-      }, 3000);
-    });
-  }
 });
