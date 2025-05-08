@@ -71,6 +71,7 @@ def extract_roles(resume_text):
         roles.add(role.strip().lower())
     return list(roles)
 
+
 def process_resume(file):
     """Process resume file and extract all relevant information."""
     resume_text = extract_text_from_file(file)
