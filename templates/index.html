@@ -216,11 +216,87 @@
                 </div>
 
             </div>
+
+            <!-- Show More Button - only visible if there are more than 10 jobs -->
+            {% if jobs|length > 10 %}
+            <button id="showMoreJobs" class="show-more-btn">
+                <i class="fas fa-plus-circle me-2"></i>Show More Jobs
+            </button>
+            {% endif %}
         </section>
-      
+        {% else %}
+        <div class="text-center py-9">
+            <div class="empty-state" data-aos="zoom-in">
+                <i class="fas fa-file-search fa-4x text-muted mb-4"></i>
+                <h3 class="h2 mb-3">Your Dream Job Awaits</h3>
+                <p class="lead text-muted mb-4">
+                    {% if message %}
+                    {{ message }}
+                    {% else %}
+                    Upload your resume to unlock personalized opportunities
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
     </main>
 
-   
+    <!-- New Footer Section -->
+    <footer class="footer mt-5 py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h4 class="text-primary fw-bold mb-4">SkillSync</h4>
+                    <p class="text-muted">Leveraging AI to connect you with your perfect career match. Our intelligent
+                        job matching system analyzes your skills and preferences to find opportunities tailored just for
+                        you.</p>
+                    <div class="social-links mt-4">
+                        <a href="#" class="me-3"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
+                    <h5 class="text-primary fw-bold mb-4">Features</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Resume Parsing</a></li>
+                        <li class="mb-2"><a href="#">Job Matching</a></li>
+                        <li class="mb-2"><a href="#">Skill Analysis</a></li>
+                        <li class="mb-2"><a href="#">Career Insights</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
+                    <h5 class="text-primary fw-bold mb-4">Resources</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Blog</a></li>
+                        <li class="mb-2"><a href="#">Career Tips</a></li>
+                        <li class="mb-2"><a href="#">Interview Prep</a></li>
+                        <li class="mb-2"><a href="#">Resume Templates</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0 text-muted">&copy; 2023 SkillSync. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+                    <a href="#" class="text-muted me-3">Privacy Policy</a>
+                    <a href="#" class="text-muted me-3">Terms of Service</a>
+                    <a href="#" class="text-muted">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        window.addEventListener('load', () => {
+            AOS.init({ duration: 800, once: true, easing: 'ease-out-quad' });
+        });
+    </script>
 </body>
 
 </html>
