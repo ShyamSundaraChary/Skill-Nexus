@@ -43,13 +43,30 @@ def match_jobs_with_resume(resume_text, jobs):
                 })
             except Exception as e:
                 logger.error(f"Error computing similarity for job {job.get('id', 'unknown')}: {e}")
-# Select top jobs per source
+
+    # Select top jobs per source
     total_jobs = 40
     sources = list(jobs_by_source.keys())
     jobs_per_source = math.ceil(total_jobs / len(sources)) if sources else 0
-    final_jobs=[]
+    final_jobs = []
+
     for source in sources:
         jobs_by_source[source].sort(key=lambda x: x['similarity_score'], reverse=True)
         final_jobs.extend(jobs_by_source[source][:jobs_per_source])
-                
+
+    # Fill remaining slots if needed
+    if len(final_jobs) < total_jobs:
+        all_jobs = [job for source in jobs_by_source.values() for job in source]
+        all_jobs.sort(key=lambda x: x['similarity_score'], reverse=True)
+        for job in all_jobs:
+            if len(final_jobs) >= total_jobs:
+                break
+            if job not in final_jobs:
+                final_jobs.append(job)
+
+    # Prepare final job list
+    final_jobs = [{'match_score': round(item['similarity_score'], 2), **item['job']} 
+                  for item in final_jobs[:total_jobs]]
+    logger.info(f"Similarity and distribution computed in {time.time() - sim_start:.2f} seconds")
+    logger.info(f"Returning {len(final_jobs)} jobs in {time.time() - start_time:.2f} seconds (sources: {sources})")
     return final_jobs
