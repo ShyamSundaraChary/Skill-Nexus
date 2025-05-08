@@ -13,11 +13,11 @@ import re
 from collections import Counter
 from Scrapping_Jobs.settings import SKILLS_LIST
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 @app.route('/')
 def index():
@@ -226,5 +226,5 @@ def get_user_experience_range(experience_category):
     """Get min/max experience years based on category."""
     return (0, 2) if experience_category == "Fresher" else (3, 20) if experience_category == "Experienced" else (0, 20)
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     app.run(debug=True)
