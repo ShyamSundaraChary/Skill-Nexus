@@ -118,3 +118,17 @@ def process_resume(file):
         "best_job_roles": best_job_roles,
         "resume_text": resume_text  # Added for embedding computation
 }
+    
+def extract_skills(resume_text):
+    """Extract skills using spaCy PhraseMatcher and regex fallback."""
+    skills = set()
+    doc = nlp(resume_text)
+    matches = matcher(doc)
+    for match_id, start, end in matches:
+        skill = doc[start:end].text.lower()
+        skills.add(skill)
+    skill_pattern = r'\b(' + '|'.join(map(re.escape, skills_list)) + r')\b'
+    additional_skills = re.findall(skill_pattern, resume_text, re.IGNORECASE)
+    skills.update(skill.lower() for skill in additional_skills)
+    return list(skills)
+    
