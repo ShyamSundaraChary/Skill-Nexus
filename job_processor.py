@@ -43,5 +43,6 @@ def match_jobs_with_resume(resume_text, jobs):
                 })
             except Exception as e:
                 logger.error(f"Error computing similarity for job {job.get('id', 'unknown')}: {e}")
+                print(f"Error computing similarity for job {job.get('id', 'unknown')}: {e}")
                 
     return final_jobs
