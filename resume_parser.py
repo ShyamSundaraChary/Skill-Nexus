@@ -132,3 +132,38 @@ def extract_skills(resume_text):
     skills.update(skill.lower() for skill in additional_skills)
     return list(skills)
     
+def extract_experience(resume_text):
+    experience_details = []
+    total_months = 0
+    # Split resume into sections
+    sections = resume_text.split("work experience")
+    work_text = sections[1] if len(sections) > 1 else resume_text
+    job_pattern = r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{4}\s*-\s*(?:present|current|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{4})'
+    matches = re.finditer(job_pattern, work_text, re.IGNORECASE)
+    for match in matches:
+        date_range = match.group(0)
+        try:
+            start_str, end_str = re.split(r'-\s*', date_range)
+            start = datetime.strptime(start_str.strip(), '%B %Y')
+            end = datetime.now() if 'present' in end_str.lower() or 'current' in end_str.lower() else datetime.strptime(end_str.strip(), '%B %Y')
+            duration_months = (end.year - start.year) * 12 + (end.month - start.month)
+            total_months += max(duration_months, 0)
+            years = duration_months // 12
+            months = duration_months % 12
+            duration = f"{years} years" if years > 0 else f"{months} months" if months > 0 else "0 months"
+            experience_details.append({'start_date': start_str.strip(), 'end_date': end_str.strip(), 'duration': duration})
+        except ValueError as e:
+            logger.warning(f"Invalid date format in {date_range}: {e}")
+            continue
+    total_years = total_months / 12 if total_months > 0 else 0
+    return total_years, experience_details
+
+def extract_education(resume_text):
+    education_pattern = r'(b\.(?:s|tech|sc)|m\.(?:s|tech|sc)|ph\.d|(?:bachelor|master|doctorate)\s+of)\s*([\w\s-]+?)(?:\s*(?:university|college|institute)\s*of\s*[\w\s]+)?(?:\s*\d{4}\s*-\s*\d{4})?'
+    matches = re.finditer(education_pattern, resume_text, re.IGNORECASE)
+    education_details = []
+    for match in matches:
+        degree = match.group(1).strip()
+        field = match.group(2).strip() if match.group(2) else "Unknown"
+        education_details.append({'degree': degree, 'field': field})
+    return education_details
