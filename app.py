@@ -208,6 +208,25 @@ def is_experience_match(job_exp_level, user_exp_category):
     return user_min <= job_max and user_max >= job_min
 
 
+def parse_experience_range(exp_level):
+    """Parse experience level string (e.g., '5-8 Yrs') to min/max years."""
+    import re
+    if not exp_level or not isinstance(exp_level, str):
+        return 0, 10
+    match = re.search(r'(\d+)-(\d+)|(\d+)\+', exp_level.replace(' Yrs', ''))
+    if match:
+        if match.group(3):
+            return int(match.group(3)), 20
+        return int(match.group(1)), int(match.group(2))
+    if 'Fresher' in exp_level or 'Entry' in exp_level:
+        return 0, 2
+    if 'Mid-Senior' in exp_level or 'Senior' in exp_level:
+        return 3, 10
+    return 0, 10
+
+def get_user_experience_range(experience_category):
+    """Get min/max experience years based on category."""
+    return (0, 2) if experience_category == "Fresher" else (3, 20) if experience_category == "Experienced" else (0, 20)
 
 
 if __name__ == "__main__":
