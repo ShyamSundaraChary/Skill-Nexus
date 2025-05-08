@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSync | AI-Powered Job Matching</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <section class="hero-section">
+        <div class="container">
+            <div class="text-center">
+                <h1 class="display-4 fw-bold" data-aos="fade-up">Transform Your Career Path with AI</h1>
+                <p class="lead mb-5" data-aos="fade-up" data-aos-delay="100">Upload your resume and discover perfectly
+                    matched opportunities</p>
+                <div class="upload-wrapper" data-aos="zoom-in" data-aos-delay="200">
+                    <form action="/upload_resume" method="POST" enctype="multipart/form-data" class="needs-validation"
+                        novalidate id="uploadForm">
+                        <div class="drag-drop-zone" id="dropZone">
+                            <input type="file" name="resume" id="resume" class="visually-hidden" required>
+                            <div class="drag-drop-content">
+                                <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
+                                <h4 class="text-primary">Drag & Drop Your Resume Here</h4>
+                                <p class="text-muted">Supported formats: PDF, DOCX (Max size: 5MB)</p>
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-3">Browse Files</button>
+                                <div class="invalid-feedback mt-2">Please select a valid file</div>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="experience_level" class="form-label">Experience Level</label>
+                                <select name="experience_level" id="experience_level" class="form-select" required>
+                                    <option value="" disabled selected>Select your experience level</option>
+                                    <option value="Fresher">Fresher</option>
+                                    <option value="Experienced">Experienced</option>
+                                </select>
+                                <div class="invalid-feedback">Please select an experience level</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Preferred Location</label>
+                                <input type="text" name="location" id="location" class="form-control"
+                                    placeholder="e.g., Bangalore, India">
+                                <div class="invalid-feedback">Please enter a valid location</div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg px-5 mt-4 shadow-sm upload-btn"
+                            id="analyzeButton">
+                            Analyze & Match Jobs <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </form>
+
+                    <!-- Loading Animation -->
+                    <div id="loadingOverlay" class="loading-overlay d-none">
+                        <div class="spinner">
+                            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                            <p class="mt-3 text-white">Analyzing your resume and finding jobs...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <main class="container">
+        {% if message %}
+        <div class="text-center py-3">
+            <div class="alert alert-info" role="alert">
+                {{ message }}
+            </div>
+        </div>
+        {% endif %}
+        {% if jobs %}
+        <section class="py-5">
+            <div class="mb-5 text-center" data-aos="fade-up">
+                <h2 class="h1 mb-3">Your Personalized Matches</h2>
+                <div class="d-flex justify-content-center gap-3">
+                    <span class="badge bg-primary"><i class="fas fa-clock me-2"></i>{{ fetch_time }}</span>
+                </div>
+            </div>
+
+            <!-- Top Job Roles Section -->
+            <div class="top-job-roles text-center mb-5" data-aos="fade-up" data-aos-delay="200">
+                <h3 class="h2 mb-4">Your Top Job Roles</h3>
+                {% if best_job_roles and best_job_roles|length > 0 %}
+                <div class="d-flex justify-content-center flex-wrap gap-4">
+                    {% for job in best_job_roles[:3] %}
+                    <div class="top-job-card p-3 shadow-sm rounded">
+                        <h4 class="h5 text-primary">{{ job }}</h4>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No specific job roles identified. Showing relevant matches.</p>
+                {% endif %}
+            </div>
+
+            <!-- New: Filter Pills -->
+            <div class="filter-pills" data-aos="fade-up" data-aos-delay="300">
+                <button class="filter-pill active" data-filter="all">All Jobs</button>
+                <button class="filter-pill" data-filter="recent">Recent Jobs</button>
+                <button class="filter-pill" data-filter="match-high">Highest Match</button>
+                {% set unique_sources = jobs | map(attribute='source') | unique | list %}
+                {% for source in unique_sources %}
+                <button class="filter-pill" data-filter="source-{{ source|lower }}">{{ source }}</button>
+                {% endfor %}
+            </div>
+
+            <!-- Job Sources Section -->
+            <div class="job-sources text-center mb-4" data-aos="fade-up" data-aos-delay="100">
+                <h2 class="h2 mb-3 text-primary font-monospace fw-bold">Showing jobs from</h2>
+                {% set source_colors = {'LinkedIn': 'bg-primary', 'Indeed': 'bg-warning', 'Naukri': 'bg-danger'} %}
+                {% set unique_sources = jobs | map(attribute='source') | unique | list %}
+                {% if unique_sources | length > 0 %}
+                {% for source in unique_sources %}
+                <span class="badge {{ source_colors[source] or 'bg-secondary' }}">{{ source }}</span>
+                {% endfor %}
+                {% else %}
+                <span class="badge bg-secondary">Various Sources</span>
+                {% endif %}
+            </div>
+
+            <!-- Job Grid -->
+            <div class="job-grid">
+                {% for job in jobs %}
+                <article class="job-card {% if loop.index > 10 %}hidden-job{% endif %}" data-aos="fade-up"
+                    data-job-source="{{ job.source|lower }}" data-match-score="{{ job.match_score or 0 }}"
+                    data-days="{{ job.days_since_posted or 999 }}" data-index="{{ loop.index }}"
+                    style="--match-percent: {{ job.match_score or 0 }}%;">
+                    <div class="card-header p-1">
+                        <span class="source-tag {{ source_colors[job.source] or 'bg-warning' }}">{{ job.source }}</span>
+                    </div>
+                    <div class="job-content">
+                        <h3 class="job-title">{{ job.job_title or 'Untitled Job' }}</h3>
+                        <div class="company-info">
+                            <span><i class="fas fa-building"></i> {{ job.company or 'Unknown Company' }}</span>
+                            <span class="location-info"><i class="fas fa-location-dot"></i> {{ job.location or 'Unknown
+                                Location' }}</span>
+                        </div>
+                        <div class="job-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                {% if job.days_since_posted is defined %}
+                                {% if job.days_since_posted == 0 %}
+                                Posted today
+                                {% elif job.days_since_posted == 1 %}
+                                Posted yesterday
+                                {% elif job.days_since_posted >= 2 and job.days_since_posted <= 6 %} Posted {{
+                                    job.days_since_posted }} days ago {% elif job.days_since_posted>= 7 and
+                                    job.days_since_posted <= 13 %} Posted a week ago {% elif job.days_since_posted>= 14
+                                        and job.days_since_posted <= 20 %} Posted 2 weeks ago {% elif
+                                            job.days_since_posted>= 21 and job.days_since_posted <= 27 %} Posted 3 weeks
+                                                ago {% else %} Posted a month ago {% endif %} {% else %} Posted recently
+                                                {% endif %} </span>
+                                                <span class="meta-item"><i class="fas fa-users"></i> {{ job.applicants
+                                                    or 0 }} applicants</span>
+                                                {% if job.job_type %}
+                                                <span class="meta-item"><i class="fas fa-briefcase"></i> {{ job.job_type
+                                                    }}</span>
+                                                {% endif %}
+                        </div>
+
+                        <!-- New match score card design -->
+                        <div class="match-score-card">
+                            <div class="skills-matches">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{% if job.matched_skills and job.matched_skills|length > 0 %}
+                                    {{ job.matched_skills|length }}
+                                    {% else %}0{% endif %} Skill Matches</span>
+                            </div>
+                            <div class="score-circle">
+                                <div class="percent-value">{{ "%.2f"|format(job.match_score or 0) }}%</div>
+                                <div class="percent-label">Match</div>
+                            </div>
+                        </div>
+
+                        <!-- Matched Skills Section -->
+                        <div class="matched-skills-section">
+                            <div class="skills-header">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Matched Skills</span>
+                            </div>
+                            <div class="skills-list">
+                                {% if job.matched_skills and job.matched_skills|length > 0 %}
+                                {% for skill in job.matched_skills[:5] %}
+                                <span class="skill-badge">{{ skill }}</span>
+                                {% endfor %}
+                                {% if job.matched_skills|length > 5 %}
+                                <span class="skill-badge more-skills">+{{ job.matched_skills|length - 5 }} more</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="no-skills">No specific skills matched</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="job-actions">
+                            <a href="{{ job.job_link or '#' }}" target="_blank" class="btn-apply">Apply Now</a>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+
+                <!-- No Jobs Message - Initially hidden, shown by JavaScript when needed -->
+                <div class="no-jobs-message" style="display: none;">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <h3>No Jobs Found</h3>
+                    <p class="text-muted">Try different filter criteria</p>
+                </div>
+
+            </div>
+        </section>
+      
+    </main>
+
+   
+</body>
+
+</html>
