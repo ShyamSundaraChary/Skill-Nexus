@@ -44,4 +44,10 @@ def match_jobs_with_resume(resume_text, jobs):
             except Exception as e:
                 logger.error(f"Error computing similarity for job {job.get('id', 'unknown')}: {e}")
                 
+# Select top jobs per source
+    total_jobs = 40
+    sources = list(jobs_by_source.keys())
+    jobs_per_source = math.ceil(total_jobs / len(sources)) if sources else 0
+    final_jobs=[]
+                
     return final_jobs
