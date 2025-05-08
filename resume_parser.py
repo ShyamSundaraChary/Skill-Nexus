@@ -59,6 +59,18 @@ def extract_personal_info(resume_text):
         "email": email.group(0) if email else "Not found",
         "phone": phone.group(0) if phone else "Not found"
 }
+
+def extract_roles(resume_text):
+    roles = set()
+    doc = nlp(resume_text.replace('\n', ' '))
+    for ent in doc.ents:
+        if ent.label_ != "ORG" and any(keyword in ent.text.lower() for keyword in ["developer", "engineer", "analyst", "manager", "scientist", "architect", "intern"]):
+            roles.add(ent.text.lower().strip())
+    role_patterns = re.findall(r'([a-zA-Z\s-]*(?:developer|engineer|analyst|manager|scientist|architect|intern))\b', resume_text.replace('\n', ' '), re.IGNORECASE)
+    for role in role_patterns:
+        roles.add(role.strip().lower())
+    return list(roles)
+
 def process_resume(file):
     """Process resume file and extract all relevant information."""
     resume_text = extract_text_from_file(file)
