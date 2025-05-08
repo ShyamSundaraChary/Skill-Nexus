@@ -34,6 +34,22 @@ skill_to_role_mapping = {
    "Data Engineer": ["python", "spark", "hadoop", "kafka", "airflow", "sql", "etl pipelines", "aws glue", "bigquery", "snowflake", "data lakes"],
    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib", "sql", "nlp"],
 }
+def extract_text_from_file(file):
+    """Extract text from PDF or DOCX file."""
+    file_extension = file.filename.split('.')[-1].lower()
+    try:
+        if file_extension == 'pdf':
+            reader = PdfReader(file)
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        elif file_extension in ['docx', 'doc']:
+            doc = Document(file)
+            text = "\n".join(paragraph.text for paragraph in doc.paragraphs if paragraph.text)
+        else:
+            raise ValueError(f"Unsupported file format: {file_extension}")
+        return text.lower().strip() if text else ""
+    except Exception as e:
+        logger.error(f"Error processing {file_extension} file: {e}")
+        return ""
 
 def process_resume(file):
     """Process resume file and extract all relevant information."""
