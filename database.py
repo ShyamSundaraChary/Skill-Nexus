@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import mysql.connector
 import logging
 from config import Config

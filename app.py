@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, jsonify
-from config import Config
+from flask import Flask, render_template, request
 from database import fetch_jobs_from_db
 from job_processor import match_jobs_with_resume
 from resume_parser import process_resume
@@ -7,7 +6,6 @@ import logging
 from datetime import datetime, date
 from dateutil.parser import parse as parse_date
 import time
-import os
 import uuid
 import re
 from collections import Counter
