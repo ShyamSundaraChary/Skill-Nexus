@@ -46,3 +46,23 @@ def fetch_jobs_from_db(preferred_location=None, experience_category=None, best_j
     conn.close()
     logger.info(f"Returning {len(jobs)} jobs")
     return jobs
+
+params = []
+    jobs = []
+
+    # Primary query: Filter based on location, experience, and roles
+    conditions = []
+    
+    # Only return jobs when location is specified
+    if preferred_location:
+        conditions.append("LOWER(location) LIKE %s")
+        params.append(f"%{preferred_location.lower()}%")
+    else:
+        return []
+    
+    # Filter for experience category
+    if experience_category:
+        if experience_category.lower() == "fresher":
+            conditions.append("(experience_level LIKE '0-%' OR experience_level LIKE '1-%')")
+        elif experience_category.lower() == "experienced":
+            conditions.append("(experience_level NOT LIKE '0-%' AND experience_level NOT LIKE '1-%')")
