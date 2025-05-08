@@ -49,5 +49,8 @@ def match_jobs_with_resume(resume_text, jobs):
     sources = list(jobs_by_source.keys())
     jobs_per_source = math.ceil(total_jobs / len(sources)) if sources else 0
     final_jobs=[]
+    for source in sources:
+        jobs_by_source[source].sort(key=lambda x: x['similarity_score'], reverse=True)
+        final_jobs.extend(jobs_by_source[source][:jobs_per_source])
                 
     return final_jobs
