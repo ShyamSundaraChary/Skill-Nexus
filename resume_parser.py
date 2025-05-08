@@ -50,7 +50,15 @@ def extract_text_from_file(file):
     except Exception as e:
         logger.error(f"Error processing {file_extension} file: {e}")
         return ""
-
+def extract_personal_info(resume_text):
+    name = re.search(r'[\w\s]+', resume_text.split('\n')[0]) or {"group": ["Unknown"]}
+    email = re.search(r'[\w\.-]+@[\w\.-]+', resume_text)
+    phone = re.search(r'\+?\d{10,12}|\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', resume_text)
+    return {
+        "name": name.group(0) if name else "Unknown",
+        "email": email.group(0) if email else "Not found",
+        "phone": phone.group(0) if phone else "Not found"
+}
 def process_resume(file):
     """Process resume file and extract all relevant information."""
     resume_text = extract_text_from_file(file)
