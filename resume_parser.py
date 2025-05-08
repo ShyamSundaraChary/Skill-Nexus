@@ -34,3 +34,50 @@ skill_to_role_mapping = {
    "Data Engineer": ["python", "spark", "hadoop", "kafka", "airflow", "sql", "etl pipelines", "aws glue", "bigquery", "snowflake", "data lakes"],
    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "statistics", "data visualization", "seaborn", "matplotlib", "sql", "nlp"],
 }
+
+def process_resume(file):
+    """Process resume file and extract all relevant information."""
+    resume_text = extract_text_from_file(file)
+    if not resume_text:
+        logger.error("No text extracted from resume file.")
+        return None
+    
+    personal_info = extract_personal_info(resume_text)
+    roles = extract_roles(resume_text)
+    skills = extract_skills(resume_text)
+    
+    # Ensure we have at least some skills, even if extraction fails
+    if not skills or len(skills) < 3:
+        # Add some common skills as default
+        default_skills = ["python", "java", "javascript", "sql", "html", "css"]
+        skills.extend(default_skills)
+        # Remove duplicates
+        skills = list(set(skills))
+        logger.warning(f"Few or no skills detected, adding default skills. Skills: {skills}")
+    
+    total_experience_years, experience_details = extract_experience(resume_text)
+    education = extract_education(resume_text)
+    experience_category = categorize_experience(total_experience_years)
+    best_job_roles = get_best_job_roles(skills)
+    
+    logger.info(f"Extracted {len(skills)} skills and {len(best_job_roles)} job roles")
+    logger.info(f"Experience category: {experience_category}")
+    logger.info(f"Total experience: {total_experience_years} years")
+    logger.info(f"Experience details: {experience_details}")
+    logger.info(f"Education details: {education}")
+    logger.info(f"Personal info: {personal_info}")
+    logger.info(f"Roles: {roles}")
+    logger.info(f"Skills: {skills}")
+    logger.info(f"Best job roles: {best_job_roles}")
+    logger.info("\n\n\n\n")  # giving gap
+    return {
+        "personal_info": personal_info,
+        "roles": roles,
+        "skills": skills,
+        "total_experience_years": round(total_experience_years, 2),
+        "experience_details": experience_details,
+        "education": education,
+        "experience_category": experience_category,
+        "best_job_roles": best_job_roles,
+        "resume_text": resume_text  # Added for embedding computation
+}
