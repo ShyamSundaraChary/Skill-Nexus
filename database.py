@@ -33,21 +33,7 @@ def fetch_jobs_from_db(preferred_location=None, experience_category=None, best_j
         applicants, source, experience_level, job_description, job_type, embedding
     """
     base_query = f"SELECT {fields} FROM jobs"
-  
-    try:
-        logger.info(f"Executing query: {query} with params: {params}")
-        cursor.execute(query, params)
-        jobs = cursor.fetchall()
-        logger.info(f"Query fetched {len(jobs)} jobs")
-    except mysql.connector.Error as e:
-        logger.warning(f"Query failed: {e}")
-
-    cursor.close()
-    conn.close()
-    logger.info(f"Returning {len(jobs)} jobs")
-    return jobs
-
-params = []
+    params = []
     jobs = []
 
     # Primary query: Filter based on location, experience, and roles
@@ -65,4 +51,28 @@ params = []
         if experience_category.lower() == "fresher":
             conditions.append("(experience_level LIKE '0-%' OR experience_level LIKE '1-%')")
         elif experience_category.lower() == "experienced":
-            conditions.append("(experience_level NOT LIKE '0-%' AND experience_level NOT LIKE '1-%')")
+            conditions.append("(experience_level NOT LIKE '0-%' AND experience_level NOT LIKE '1-%')")
+    
+    # Filter for best job roles
+    if best_job_roles:
+        role_conditions = []
+        for role in best_job_roles:
+            role_conditions.append("LOWER(job_title) LIKE %s")
+            params.extend([f"%{role.lower()}%"])
+        if role_conditions:
+            conditions.append("(" + " OR ".join(role_conditions) + ")")
+
+    # Combine query with conditions
+    query = base_query + " WHERE " + " AND ".join(conditions) + " ORDER BY posted_date DESC LIMIT 100"
+    try:
+        logger.info(f"Executing query: {query} with params: {params}")
+        cursor.execute(query, params)
+        jobs = cursor.fetchall()
+        logger.info(f"Query fetched {len(jobs)} jobs")
+    except mysql.connector.Error as e:
+        logger.warning(f"Query failed: {e}")
+
+    cursor.close()
+    conn.close()
+    logger.info(f"Returning {len(jobs)} jobs")
+    return jobs
