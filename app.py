@@ -13,11 +13,11 @@ import re
 from collections import Counter
 from Scrapping_Jobs.settings import SKILLS_LIST
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(_name_)
 
 @app.route('/')
 def index():
@@ -182,7 +182,6 @@ def upload_resume():
 
     return render_template('index.html', jobs=jobs, fetch_time=fetch_time, best_job_roles=best_job_roles, message=message)
 
-
 def extract_skills(text):
     """Extract skills from text using common skill keywords."""
     common_skills = SKILLS_LIST
@@ -205,8 +204,7 @@ def is_experience_match(job_exp_level, user_exp_category):
         return False
     job_min, job_max = parse_experience_range(job_exp_level)
     user_min, user_max = get_user_experience_range(user_exp_category)
-    return user_min <= job_max and user_max >= job_min
-
+    return user_min <= job_max and user_max >= job_min
 
 def parse_experience_range(exp_level):
     """Parse experience level string (e.g., '5-8 Yrs') to min/max years."""
@@ -228,6 +226,5 @@ def get_user_experience_range(experience_category):
     """Get min/max experience years based on category."""
     return (0, 2) if experience_category == "Fresher" else (3, 20) if experience_category == "Experienced" else (0, 20)
 
-
-if __name__ == "__main__":
+if _name_ == "_main_":
     app.run(debug=True)
