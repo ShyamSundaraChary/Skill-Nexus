@@ -167,3 +167,34 @@ def extract_education(resume_text):
         field = match.group(2).strip() if match.group(2) else "Unknown"
         education_details.append({'degree': degree, 'field': field})
     return education_details
+
+def categorize_experience(total_years):
+    """Categorize experience level."""
+    if total_years <= 1:
+        return "Fresher"
+    else:
+        return "Experienced"
+
+def get_best_job_roles(user_skills, top_n=3):
+    role_scores = {}
+    user_skills_lower = [skill.lower() for skill in user_skills]
+    for role, required_skills in skill_to_role_mapping.items():
+        matching_skills = 0
+        for user_skill in user_skills_lower:
+            for req_skill in required_skills:
+                if user_skill == req_skill:  # Exact match
+                    matching_skills += 1
+                    break
+        match_percentage = (matching_skills / max(len(required_skills), 1)) * 100
+        total_score = match_percentage * 0.7 + matching_skills * 10
+        role_scores[role] = total_score
+    sorted_roles = sorted(role_scores.items(), key=lambda x: x[1], reverse=True)
+    top_roles = [role.replace(" ", "_").lower() for role, score in sorted_roles[:top_n] if score > 0]
+    if len(top_roles) < 2:
+        default_roles = ["software_engineer", "full_stack_developer"]
+        for role in default_roles:
+            if role not in top_roles:
+                top_roles.append(role)
+                if len(top_roles) >= top_n:
+                    break
+    return top_roles[:top_n]
