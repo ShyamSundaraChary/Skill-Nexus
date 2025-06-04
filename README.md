@@ -87,7 +87,7 @@ This project is licensed under the **MIT License**.
 
 ---
 
-Made with ❤️ by [Shyam Sundara Chary](https://github.com/ShyamSundaraChary)
+Made with by [Shyam Sundara Chary](https://github.com/ShyamSundaraChary)
 
 ## Team mate Rakesh
 
