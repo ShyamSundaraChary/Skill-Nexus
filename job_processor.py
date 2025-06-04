@@ -35,8 +35,7 @@ def match_jobs_with_resume(resume_text, jobs):
         if job.get('embedding'):
             try:
                 job_embedding = np.array(json.loads(job['embedding']))
-                similarity = cosine_similarity(resume_embedding.reshape(1, -1), 
-                                             job_embedding.reshape(1, -1))[0][0]
+                similarity = cosine_similarity(resume_embedding.reshape(1, -1), job_embedding.reshape(1, -1))[0][0]
                 jobs_by_source[job['source']].append({
                     'job': job,
                     'similarity_score': similarity * 100

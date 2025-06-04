@@ -11,6 +11,19 @@
 </head>
 
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">SkillSync</a>
+            <div class="d-flex align-items-center">
+                <span class="me-3">Welcome, {{ session.get('user_name', 'User') }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
     <!-- Dark Mode Toggle -->
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
         <i class="fas fa-moon"></i>
