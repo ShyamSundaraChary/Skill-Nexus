@@ -1,4 +1,4 @@
-# 🧠 AI Job Recommendation System
+# 🧠 Skill Nexus - AI Job Recommendation System
 
 An AI-powered job recommendation system that intelligently matches users with relevant job opportunities based on their skills and preferences. This project leverages web scraping, natural language processing, and backend technologies to provide accurate and personalized job suggestions.
 
@@ -35,8 +35,8 @@ An AI-powered job recommendation system that intelligently matches users with re
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/ShyamSundaraChary/AI-Job-Recommendation.git
-   cd AI-Job-Recommendation
+   git clone https://github.com/ShyamSundaraChary/Skill-Nexus-AI-Job-Recommendation.git
+   cd Skill-Nexus-AI-Job-Recommendation
    ```
 
 2. **Install required packages**:
@@ -74,7 +74,7 @@ An AI-powered job recommendation system that intelligently matches users with re
 ## 📂 Project Structure
 
 ```
-AI-Job-Recommendation/
+Skill-Nexus-AI-Job-Recommendation/
 │
 ├── scrapy_job/               # Scrapy project directory
 │   ├── spiders/              # Web spider definitions for job sites
@@ -111,19 +111,44 @@ AI-Job-Recommendation/
 
 ## 👥 Development Team
 
-### Core Contributors
+<div align="center">
 
-**🔧 [Shyam Sundara Chary](https://github.com/ShyamSundaraChary)** - *Lead Developer & Project Architect*
-- Backend system design and implementation
-- Web scraping infrastructure development
-- Database architecture and optimization
-- NLP pipeline development
+### Meet Our Core Contributors
 
-**🤖 Rakesh** - *AI/ML Engineer & Data Specialist*
-- Machine learning model development
-- Advanced NLP techniques implementation
-- Data preprocessing and feature engineering
-- Algorithm optimization and performance tuning
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="https://github.com/ShyamSundaraChary.png" width="150px" height="150px" style="border-radius: 50%; border: 3px solid #0366d6;"/><br/>
+<strong>🔧 Shyam Sundara Chary</strong><br/>
+<em>Lead Developer & Project Architect</em><br/>
+<a href="https://github.com/ShyamSundaraChary">@ShyamSundaraChary</a><br/><br/>
+<details>
+<summary>🛠️ Key Responsibilities</summary>
+<br/>
+• Backend system design and implementation<br/>
+• Web scraping infrastructure development<br/>
+• Database architecture and optimization<br/>
+• NLP pipeline development<br/>
+</details>
+</td>
+<td align="center" width="50%">
+<img src="https://github.com/rakeshkolipakaace.png" width="150px" height="150px" style="border-radius: 50%; border: 3px solid #28a745;"/><br/>
+<strong>🤖 Rakesh</strong><br/>
+<em>AI/ML Engineer & Data Specialist</em><br/>
+<a href="https://github.com/rakeshkolipakaace">@rakeshkolipakaace</a><br/><br/>
+<details>
+<summary>🧠 Key Responsibilities</summary>
+<br/>
+• Machine learning model development<br/>
+• Advanced NLP techniques implementation<br/>
+• Data preprocessing and feature engineering<br/>
+• Algorithm optimization and performance tuning<br/>
+</details>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
@@ -166,31 +191,6 @@ For major changes, please open an issue first to discuss your proposed modificat
 
 ---
 
-## 🚀 Future Roadmap
-
-### Phase 1 (Current)
-- ✅ Basic scraping and matching functionality
-- ✅ Core NLP skill extraction
-- ✅ SQLite database integration
-
-### Phase 2 (In Progress)
-- 🔄 **Playwright Integration**: Enhanced dynamic content scraping
-- 🔄 **Resume Parsing**: Automatic skill extraction from uploaded resumes
-- 🔄 **Web Interface**: User-friendly web application
-
-### Phase 3 (Planned)
-- 📋 **Advanced ML Models**: Deep learning for improved job ranking
-- 📋 **Real-time Notifications**: Instant alerts for matching jobs
-- 📋 **API Development**: RESTful API for third-party integrations
-- 📋 **Mobile Application**: Cross-platform mobile app
-
-### Phase 4 (Future Vision)
-- 📋 **AI-Powered Insights**: Career path recommendations
-- 📋 **Salary Prediction**: ML-based compensation analysis
-- 📋 **Company Culture Matching**: Personality-job fit algorithms
-
----
-
 ## 📄 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
@@ -199,9 +199,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Contact & Support
 
-- **Project Repository**: [AI-Job-Recommendation](https://github.com/ShyamSundaraChary/AI-Job-Recommendation)
+- **Project Repository**: [Skill-Nexus-AI-Job-Recommendation](https://github.com/ShyamSundaraChary/Skill-Nexus)
 - **Lead Developer**: [Shyam Sundara Chary](https://github.com/ShyamSundaraChary)
-- **Issues & Bug Reports**: [GitHub Issues](https://github.com/ShyamSundaraChary/AI-Job-Recommendation/issues)
+- **Issues & Bug Reports**: [GitHub Issues](https://github.com/ShyamSundaraChary/Skill-Nexus/issues)
 
 ---
 
@@ -215,8 +215,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**Made with ❤️ by Shyam Sundara Chary & Rakesh**
+**Made with ❤️ by [Shyam Sundara Chary](https://github.com/ShyamSundaraChary) & [Rakesh](https://github.com/rakeshkolipakaace)**
 
-*Empowering job seekers with AI-driven recommendations*
+*Connecting talent with opportunity through intelligent job matching*
 
 </div>
