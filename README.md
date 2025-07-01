@@ -35,8 +35,8 @@ An AI-powered job recommendation system that intelligently matches users with re
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/ShyamSundaraChary/Skill-Nexus-AI-Job-Recommendation.git
-   cd Skill-Nexus-AI-Job-Recommendation
+   git clone https://github.com/ShyamSundaraChary/Skill-Nexus.git
+   cd Skill-Nexus
    ```
 
 2. **Install required packages**:
