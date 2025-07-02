@@ -118,10 +118,10 @@ Skill-Nexus-AI-Job-Recommendation/
 <table>
 <tr>
 <td align="center" width="50%">
-<img src="https://github.com/ShyamSundaraChary.png" width="150px" height="150px" style="border-radius: 50%; border: 3px solid #0366d6;"/><br/>
-<strong>🔧 Shyam Sundara Chary</strong><br/>
+<img src="https://github.com/rakeshkolipakaace.png" width="150px" height="150px" style="border-radius: 50%; border: 3px solid #28a745;"/><br/>
+<strong>🤖 Rakesh</strong><br/>
 <em>Lead Developer & Project Architect</em><br/>
-<a href="https://github.com/ShyamSundaraChary">@ShyamSundaraChary</a><br/><br/>
+<a href="https://github.com/rakeshkolipakaace">@rakeshkolipakaace</a><br/><br/>
 <details>
 <summary>🛠️ Key Responsibilities</summary>
 <br/>
@@ -132,10 +132,10 @@ Skill-Nexus-AI-Job-Recommendation/
 </details>
 </td>
 <td align="center" width="50%">
-<img src="https://github.com/rakeshkolipakaace.png" width="150px" height="150px" style="border-radius: 50%; border: 3px solid #28a745;"/><br/>
-<strong>🤖 Rakesh</strong><br/>
+<img src="https://github.com/ShyamSundaraChary.png" width="150px" height="150px" style="border-radius: 50%; border: 3px solid #0366d6;"/><br/>
+<strong>🔧 Shyam Sundara Chary</strong><br/>
 <em>AI/ML Engineer & Data Specialist</em><br/>
-<a href="https://github.com/rakeshkolipakaace">@rakeshkolipakaace</a><br/><br/>
+<a href="https://github.com/ShyamSundaraChary">@ShyamSundaraChary</a><br/><br/>
 <details>
 <summary>🧠 Key Responsibilities</summary>
 <br/>
