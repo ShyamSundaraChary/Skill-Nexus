@@ -106,6 +106,8 @@ Skill-Nexus-AI-Job-Recommendation/
 ├── config.py                 # Configuration settings
 └── README.md                 # Project documentation
 ```
+<img width="1920" height="1080" alt="Screenshot (199)" src="https://github.com/user-attachments/assets/ee96643b-65bb-4bb5-ac60-aa8c9f79b9c6" />
+<img width="1920" height="1080" alt="Screenshot (200)" src="https://github.com/user-attachments/assets/eca22b51-1acf-472e-8126-7d9c66d6583e" />
 
 ---
 
@@ -162,6 +164,10 @@ Skill-Nexus-AI-Job-Recommendation/
 
 ---
 
+
+
+
+
 ## 🤝 Contributing
 
 We welcome contributions from the community! Here's how you can help:
@@ -190,6 +196,7 @@ For major changes, please open an issue first to discuss your proposed modificat
 - **Database Efficiency**: Optimized for 100K+ job listings
 
 ---
+
 
 ## 📄 License
 
