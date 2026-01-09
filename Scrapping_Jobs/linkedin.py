@@ -37,8 +37,7 @@ if not SCRAPERAPI_KEY:
 SCRAPERAPI_PROXY = f'http://api.scraperapi.com:8010?api_key={SCRAPERAPI_KEY}&url='
 
 # Define job roles to scrape
-JOB_ROLES = ["full_stack_developer", "java_developer", "python_developer","Frontend Developer", 
-             "Backend Developer","Data Scientist", "DevOps Engineer","software_engineer"]
+JOB_ROLES = ["python_developer","Frontend Developer"]
 
 # Database configuration
 DB_CONFIG = {
@@ -61,13 +60,16 @@ def create_chrome_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--enable-unsafe-swiftshader")
     chrome_options.add_argument("--disable-webgl")
+    # Disable WebRTC
+    chrome_options.add_argument("--disable-webrtc")
+    chrome_options.add_experimental_option("prefs", {"webrtc.ip_handling_policy": "disable_non_proxied_udp",
+                                                     "webrtc.udp_port_range": "0-0"})
     proxy = Proxy()
     proxy.proxy_type = ProxyType.MANUAL
     proxy.http_proxy = SCRAPERAPI_PROXY
     proxy.ssl_proxy = SCRAPERAPI_PROXY
     chrome_options.proxy = proxy
     return webdriver.Chrome(options=chrome_options, service=Service(ChromeDriverManager().install()))
-
 # Parse Posted Date
 def parse_posted_date(posted_text):
     try:
@@ -197,8 +199,8 @@ def scrape_linkedin_jobs(job_titles, jobs_per_title):
             jobs_collected = 0
             page = 1
             while jobs_collected < jobs_per_title and page <= 5:
-                search_url = f"https://www.linkedin.com/jobs/search/?keywords={job_title.replace('_', '%20')}&location=India&f_TPR=r86400&start={(page-1)*25}"
-                # search_url = f"https://www.linkedin.com/jobs/search/?keywords={job_title.replace('_', '%20')}&location=India&f_TPR=r2592000&start={(page-1)*25}"
+                # search_url = f"https://www.linkedin.com/jobs/search/?keywords={job_title.replace('_', '%20')}&location=India&f_TPR=r86400&start={(page-1)*25}"
+                search_url = f"https://www.linkedin.com/jobs/search/?keywords={job_title.replace('_', '%20')}&location=India&f_TPR=r2592000&start={(page-1)*25}"
                 driver.get(search_url)
                 try:
                     WebDriverWait(driver, 15).until(
@@ -253,7 +255,7 @@ def scrape_linkedin_jobs(job_titles, jobs_per_title):
 if __name__ == "__main__":
     start_time = time.time()
     try:
-        scrape_linkedin_jobs(JOB_ROLES, jobs_per_title=50)
+        scrape_linkedin_jobs(JOB_ROLES, jobs_per_title=10)
     finally:
         logging.info("Scraping completed")
     end_time = time.time()

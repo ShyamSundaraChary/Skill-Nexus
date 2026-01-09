@@ -34,8 +34,7 @@ logging.basicConfig(
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Define job roles to scrape
-JOB_ROLES = ["full_stack_developer", "java_developer", "python_developer","Frontend Developer", 
-             "Backend Developer","Data Scientist", "DevOps Engineer","software_engineer"]
+JOB_ROLES = ["full_stack_developer","python_developer"]
 
 
 # Database configuration
@@ -96,7 +95,7 @@ def scrape_job_page(job_title: str, page: int, max_jobs: int) -> List[Dict[str, 
     jobs = []
     driver = create_driver()
     try:
-        base_url = f"https://www.naukri.com/{job_title}-jobs?jobAge=7&pageNo={page}"
+        base_url = f"https://www.naukri.com/{job_title}-jobs?jobAge=30&pageNo={page}"
         driver.get(base_url)
         try:
             WebDriverWait(driver, 10).until(
@@ -228,7 +227,7 @@ def scrape_naukri_jobs(job_titles: List[str], max_jobs: int) -> Dict[str, List[D
 
 if __name__ == "__main__":
     start_time = time.time()
-    results = scrape_naukri_jobs(JOB_ROLES, max_jobs=50)
+    results = scrape_naukri_jobs(JOB_ROLES, max_jobs=30)
     for title, jobs in results.items():
         logging.info(f"Results for {title}:")
         logging.info(f"Total jobs found: {len(jobs)}")

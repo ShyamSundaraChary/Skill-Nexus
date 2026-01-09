@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from database import connect_db , fetch_jobs_from_db
+from flask import Flask, render_template, request
+from database import fetch_jobs_from_db
 from job_processor import match_jobs_with_resume
 from resume_parser import process_resume
 import logging
@@ -10,132 +10,18 @@ import uuid
 import re
 from collections import Counter
 from Scrapping_Jobs.settings import SKILLS_LIST
-from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps
-
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this to a secure secret key
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def init_db():
-    """Initialize the users table in the existing MySQL database."""
-    conn = connect_db()
-    if not conn:
-        logger.error("Failed to connect to database")
-        return
-    
-    cursor = conn.cursor()
-    try:
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        conn.commit()
-        logger.info("Users table created successfully")
-    except Exception as e:
-        logger.error(f"Error creating users table: {e}")
-    finally:
-        cursor.close()
-        conn.close()
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        conn = connect_db()
-        if not conn:
-            flash('Database connection error. Please try again later.')
-            return render_template('login.html')
-        
-        cursor = conn.cursor(dictionary=True)
-        try:
-            cursor.execute('SELECT * FROM users WHERE email = %s', (email,))
-            user = cursor.fetchone()
-            
-            if user and check_password_hash(user['password'], password):
-                session['user_id'] = user['id']
-                session['user_name'] = user['name']
-                return redirect(url_for('index'))
-            else:
-                flash('Invalid email or password')
-        except Exception as e:
-            logger.error(f"Login error: {e}")
-            flash('An error occurred. Please try again.')
-        finally:
-            cursor.close()
-            conn.close()
-    
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if password != confirm_password:
-            flash('Passwords do not match')
-            return render_template('register.html')
-        
-        hashed_password = generate_password_hash(password)
-        
-        conn = connect_db()
-        if not conn:
-            flash('Database connection error. Please try again later.')
-            return render_template('register.html')
-        
-        cursor = conn.cursor()
-        try:
-            cursor.execute('INSERT INTO users (name, email, password) VALUES (%s, %s, %s)',
-                         (name, email, hashed_password))
-            conn.commit()
-            flash('Registration successful! Please login.')
-            return redirect(url_for('login'))
-        except Exception as e:
-            logger.error(f"Registration error: {e}")
-            if "Duplicate entry" in str(e):
-                flash('Email already registered')
-            else:
-                flash('An error occurred. Please try again.')
-        finally:
-            cursor.close()
-            conn.close()
-    
-    return render_template('register.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
 @app.route('/')
-@login_required
 def index():
     """Render the initial page with no jobs."""
     return render_template('index.html', jobs=[], message=None, best_job_roles=[])
 
 @app.route('/upload_resume', methods=['POST'])
-@login_required
 def upload_resume():
     """Handle resume upload and job matching."""
     start_time = time.time()
@@ -178,21 +64,15 @@ def upload_resume():
     best_job_roles = resume_data.get('best_job_roles', [])
     
     # Extract skills from resume
-    resume_skills = extract_skills(resume_text)
+    resume_skills = resume_data.get('skills', [])
     
-    # Get user preferences from form
+    # Get user preferences from form from frontend 
     preferred_location = request.form.get('location', '').strip()
     experience_level = request.form.get('experience_level', None)
     
-    # Use form input for experience if available, otherwise use the parsed value
+    # Use form input for experience if available, otherwise use the parsed value 
     if experience_level:
         experience_category = experience_level
-
-    # Edge case: Validate experience_level
-    if not experience_category:
-        logger.warning("No experience category provided in resume data")
-        return render_template('index.html', jobs=[], message="Please provide experience level", best_job_roles=best_job_roles), 400
-
     logger.info(f"Fetching jobs for location: {preferred_location}, experience: {experience_category}, roles: {best_job_roles}")
     
     # Fetch jobs
@@ -252,6 +132,7 @@ def upload_resume():
                 # Base score (from the job_processor) + bonus for matched skills (max 20% bonus)
                 skill_bonus = min(len(matched_skills) * 4, 20)  # 4% per skill, max 20%
                 job['match_score'] = min(job.get('match_score', 0) + skill_bonus, 100)  # Cap at 100%
+                
     except Exception as e:
         logger.error(f"Job matching failed: {e}")
         return render_template('index.html', jobs=[], message="Error matching jobs. Please try again.", best_job_roles=best_job_roles), 500
@@ -338,5 +219,4 @@ def get_user_experience_range(experience_category):
     return (0, 2) if experience_category == "Fresher" else (3, 20) if experience_category == "Experienced" else (0, 20)
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)

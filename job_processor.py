@@ -6,7 +6,7 @@ import logging
 import math
 from collections import defaultdict
 import time
-
+import config
 logger = logging.getLogger(__name__)
 
 # Load the embedding model once at module level
